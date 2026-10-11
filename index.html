@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0b0b10" />
+    <meta
+      name="description"
+      content="RE:FRAME — 写真を切り札に変える、3対3のカードデュエル。CPUでも、友達とも。"
+    />
+    <title>RE:FRAME — その一枚で、運命を変えろ。</title>
+  </head>
+  <body data-view="home">
+    <div id="app">
+      <header class="site-header">
+        <button class="brand" data-view="home" aria-label="RE:FRAME ホーム">
+          <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+            <path d="M20 2 38 20 20 38 2 20Z" />
+            <path d="M12 12h15v8H17l10 9M12 29V12" /></svg
+          ><span
+            >RE<span class="brand-colon">:</span>FRAME<small
+              >フォトカード・デュエル</small
+            ></span
+          >
+        </button>
+        <nav class="view-nav" aria-label="メインメニュー">
+          <button data-view="home" class="selected" aria-pressed="true">
+            <span class="nav-symbol">⌂</span><span>ホーム</span>
+          </button>
+          <button data-view="creator" aria-pressed="false">
+            <span class="nav-symbol">◇</span><span>カード作成</span>
+          </button>
+          <button data-view="team" aria-pressed="false">
+            <span class="nav-symbol">▱</span><span>編成</span>
+          </button>
+          <button data-view="battle" aria-pressed="false">
+            <span class="nav-symbol">⚔</span><span>バトル</span>
+          </button>
+        </nav>
+        <div class="header-tools">
+          <span class="network-label"><i></i> PRIVATE DUEL</span
+          ><button
+            id="motion-toggle"
+            class="icon-button sound-toggle"
+            aria-label="演出をオフにする"
+            aria-pressed="true"
+            title="演出のオン／オフ"
+          >
+            <span>✦</span><small>ON</small></button
+          ><button
+            id="sound-toggle"
+            class="icon-button sound-toggle"
+            aria-label="効果音をオンにする"
+            aria-pressed="false"
+            title="効果音のオン／オフ"
+          >
+            <span>♪</span><small>OFF</small>
+          </button>
+        </div>
+      </header>
+      <main id="main-content">
+        <section
+          id="home-screen"
+          class="home-screen"
+          aria-labelledby="home-title"
+        >
+          <div class="home-grain" aria-hidden="true"></div>
+          <div class="home-copy">
+            <p class="eyebrow"><span></span> A NEW FRAME. A NEW FATE.</p>
+            <h1 id="home-title">その一枚で、<br /><em>運命を変えろ。</em></h1>
+            <p class="home-description">
+              何気ない写真に、まだ見ぬ力が眠っている。<br />3枚の切り札と、あなただけの戦略で挑め。
+            </p>
+            <div class="home-primary">
+              <button class="primary-button" data-home-action="quick-cpu">
+                <span class="button-diamond">◆</span
+                ><span
+                  >デュエルを始める<small
+                    >サンプル3体ですぐにCPU対戦</small
+                  ></span
+                ><span class="button-arrow">→</span>
+              </button>
+              <div class="home-secondary-actions">
+                <button class="home-create" data-view="creator">
+                  写真からカードを作る <span>↗</span>
+                </button>
+                <button
+                  id="mobile-guide-button"
+                  class="mobile-guide-button"
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-controls="mobile-guide"
+                >
+                  <svg viewBox="0 0 20 26" aria-hidden="true">
+                    <rect x="3" y="1" width="14" height="24" rx="3" />
+                    <path d="M7 4h6M8 21h4" /></svg
+                  >スマホで遊ぶ
+                </button>
+              </div>
+            </div>
+            <div class="home-specs">
+              <div><b>03</b><span>CARDS / チーム</span></div>
+              <div><b>04</b><span>SKILLS / 技</span></div>
+              <div><b>10</b><span>STATS / 個性</span></div>
+            </div>
+          </div>
+          <div class="home-showcase" aria-label="オリジナルのイメージカード">
+            <div class="hero-orbit orbit-a"></div>
+            <div class="hero-orbit orbit-b"></div>
+            <div class="hero-beam"></div>
+            <div class="display-card card-back back-one" aria-hidden="true">
+              <span>RE:FRAME</span><i>◇</i><small>UNLOCK YOUR FATE</small>
+            </div>
+            <div class="display-card card-back back-two" aria-hidden="true">
+              <span>RE:FRAME</span><i>◇</i><small>UNLOCK YOUR FATE</small>
+            </div>
+            <article class="display-card hero-card">
+              <div class="display-heading">
+                <div>
+                  <small>LEGEND / PHOTO-V3</small>
+                  <h2>翠嵐の竜王</h2>
+                </div>
+                <span>風</span>
+              </div>
+              <div class="hero-art">
+                <img
+                  src="/strong-cards/previews/05-jade-dragon.jpg"
+                  alt="翠嵐竜エメラルディアのオリジナルイラスト"
+                  fetchpriority="high"
+                /><span class="hero-rarity">PRISM FOIL</span>
+              </div>
+              <div class="display-lore">
+                <span>✦ ✦ ✦ ✦ ✦ ✦</span>
+                <p>静寂を裂き、運命を穿つ。</p>
+              </div>
+              <div class="display-footer">
+                <b>RE:FRAME</b><span>伝説のカード図鑑 ↗</span>
+              </div>
+              <button
+                type="button"
+                class="hero-vault-hit"
+                data-open-vault
+                aria-label="伝説のカード図鑑を開く"
+                aria-haspopup="dialog"
+                aria-controls="vault-dialog"
+              ></button>
+            </article>
+            <span class="showcase-label">タップして、伝説の10枚を見る ↗</span
+            ><span class="floating-spark spark-a">✦</span
+            ><span class="floating-spark spark-b">✧</span>
+          </div>
+          <div class="home-mode-grid">
+            <button class="home-mode" data-home-action="cpu">
+              <span class="mode-icon">◈</span
+              ><span
+                ><small>SOLO DUEL</small><strong>CPUと腕試し</strong
+                ><em>3段階の難易度で、戦略を磨く。</em></span
+              ><b>↗</b></button
+            ><button class="home-mode" data-home-action="online">
+              <span class="mode-icon">⚔</span
+              ><span
+                ><small>FRIEND DUEL</small><strong>友達と対戦</strong
+                ><em>合言葉でつながる、プライベートルーム。</em></span
+              ><b>↗</b>
+            </button>
+          </div>
+        </section>
+        <section
+          id="creator-screen"
+          class="creator-screen"
+          aria-labelledby="hero-title"
+          hidden
+        >
+          <div class="creator-heading">
+            <p class="eyebrow">CARD FORGE <span>/ 01</span></p>
+            <h1 id="hero-title">写真を、<em>切り札に。</em></h1>
+            <p>同じ写真に、同じ力。輝きだけは、運に委ねる。</p>
+          </div>
+          <div class="hero">
+            <div class="intro">
+              <div class="upload-zone" id="drop-zone">
+                <input
+                  id="photo-input"
+                  type="file"
+                  accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                  hidden
+                /><button class="primary-button" id="upload-button">
+                  <span>＋</span> 写真を選ぶ
+                  <span class="button-arrow">↗</span>
+                </button>
+                <p class="file-hint">
+                  JPEG / PNG · 12MBまで · HEICは変換が必要
+                </p>
+              </div>
+              <button class="sample-button" id="sample-button">
+                ↻ サンプルで試す
+              </button>
+              <button
+                type="button"
+                class="vault-open"
+                data-open-vault
+                aria-haspopup="dialog"
+                aria-controls="vault-dialog"
+              >
+                ★ 伝説のカード図鑑 · 10枚を見る ↗
+              </button>
+              <aside class="customize-panel">
+                <label for="name-input">カード名 <span>18文字まで</span></label
+                ><input
+                  id="name-input"
+                  type="text"
+                  maxlength="18"
+                  value="はじまりの一枚"
+                  autocomplete="off"
+                />
+                <div class="finish-info">
+                  <span>今回の加工</span><strong id="finish-name">—</strong>
+                </div>
+                <p class="customize-hint">
+                  キラ加工は能力に影響しません。<br />カード生成のたびに抽選されます。
+                </p>
+                <div class="creator-actions">
+                  <button id="add-team-button" class="battle-primary" disabled>
+                    チームに追加 <span>＋</span></button
+                  ><button
+                    class="download-button"
+                    id="download-button"
+                    disabled
+                  >
+                    画像を保存 <span>↓</span>
+                  </button>
+                </div>
+              </aside>
+              <div id="status" class="status" role="status" aria-live="polite">
+                カードを準備しています…
+              </div>
+              <div class="privacy-note">
+                <span>⌑</span>
+                <p>
+                  作成・CPU戦は端末内で処理。<br />友達との対戦時のみ写真を共有します。
+                </p>
+              </div>
+            </div>
+            <div class="card-stage">
+              <div class="forge-circle"></div>
+              <span class="stage-mark">PHOTO-V3 / REPRODUCIBLE GENERATION</span>
+              <div
+                class="card-shell"
+                id="card-shell"
+                aria-busy="true"
+                tabindex="-1"
+              >
+                <article
+                  class="game-card finish-normal"
+                  id="game-card"
+                  aria-label="生成された写真カード"
+                >
+                  <div class="card-top">
+                    <span class="card-series">RE:FRAME</span
+                    ><span class="card-number" id="card-number">NO. —</span>
+                  </div>
+                  <div class="card-meta">
+                    <span id="card-level">LEVEL —</span
+                    ><span id="card-attribute">PHOTO CARD</span>
+                  </div>
+                  <div class="photo-frame">
+                    <img id="card-photo" alt="生成したカードの写真" /><span
+                      class="photo-label"
+                      id="photo-label"
+                      >SAMPLE IMAGE</span
+                    >
+                  </div>
+                  <div class="card-heading">
+                    <h2 id="card-name">はじまりの一枚</h2>
+                    <span class="attribute-seal" id="attribute-seal">✦</span>
+                  </div>
+                  <div class="card-tagline">
+                    <span id="card-type">写真に眠る力を、解き放て。</span
+                    ><span>✧</span>
+                  </div>
+                  <div class="card-primary-stats" id="card-primary-stats"></div>
+                  <div id="card-mini-moves" class="card-mini-moves"></div>
+                  <div class="card-footer">
+                    <span id="finish-label">NORMAL</span
+                    ><span id="rule-label">PHOTO-V3</span>
+                  </div>
+                </article>
+              </div>
+              <div class="stage-caption">
+                <span id="stage-caption">能力は写真から。輝きは、運から。</span>
+              </div>
+              <button id="creator-details-button" class="outline-button">
+                能力・技・写真の解析を見る <span>＋</span>
+              </button>
+            </div>
+            <aside class="forge-guide">
+              <p class="eyebrow">YOUR ORIGINAL</p>
+              <h2>一枚の写真に、<br />10の個性。</h2>
+              <div>
+                <b>01</b
+                ><span
+                  >写真を選ぶ<small>色・明暗・輪郭を能力に変換。</small></span
+                >
+              </div>
+              <div>
+                <b>02</b
+                ><span
+                  >カードを見極める<small
+                    >属性、レベル、4つの技を確認。</small
+                  ></span
+                >
+              </div>
+              <div>
+                <b>03</b
+                ><span
+                  >3体でデュエルへ<small>強さだけでは決まらない。</small></span
+                >
+              </div>
+              <p>
+                元の写真は残しておいてください。<br />保存したカード画像は記念用です。
+              </p>
+            </aside>
+          </div>
+        </section>
+        <section
+          id="battle-app"
+          class="battle-app"
+          aria-label="編成と対戦画面"
+          hidden
+        ></section>
+      </main>
+      <footer class="site-footer">
+        <span><i></i> PRIVATE PHOTO CARD DUEL</span>
+        <p>写真の個性と、あなたの一手。</p>
+        <span>RE:FRAME <b>UI BETA / 0.8.0</b></span>
+      </footer>
+    </div>
+    <dialog
+      id="creator-details"
+      class="detail-dialog"
+      aria-labelledby="workspace-title"
+    >
+      <header class="dialog-heading">
+        <div>
+          <p class="eyebrow">CARD DATA</p>
+          <h2 id="workspace-title">切り札の詳細</h2>
+        </div>
+        <button
+          id="close-creator-details"
+          class="close-button"
+          aria-label="詳細を閉じる"
+        >
+          ×
+        </button>
+      </header>
+      <section class="workspace">
+        <div class="details-panel">
+          <div class="tabs" role="tablist" aria-label="カードの詳細">
+            <button
+              class="tab active"
+              id="tab-stats"
+              role="tab"
+              aria-selected="true"
+              aria-controls="panel-stats"
+              data-tab="stats"
+            >
+              能力 <span>10</span></button
+            ><button
+              class="tab"
+              id="tab-moves"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-moves"
+              tabindex="-1"
+              data-tab="moves"
+            >
+              技 <span>04</span></button
+            ><button
+              class="tab"
+              id="tab-analysis"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-analysis"
+              tabindex="-1"
+              data-tab="analysis"
+            >
+              写真の解析 <span>↗</span>
+            </button>
+          </div>
+          <div
+            class="tab-panel"
+            id="panel-stats"
+            role="tabpanel"
+            aria-labelledby="tab-stats"
+          >
+            <div class="stats-grid" id="stats-grid"></div>
+            <p class="panel-note">
+              急所・耐性・回復力・貫通力は能力値です。確率（%）ではありません。
+            </p>
+          </div>
+          <div
+            class="tab-panel"
+            id="panel-moves"
+            role="tabpanel"
+            aria-labelledby="tab-moves"
+            hidden
+          >
+            <div id="moves-list"></div>
+            <p class="panel-note">
+              通常48種＋レア20種から写真ごとに4技を決定。連撃の威力は1発分です。詳しくはバトルルールへ。
+            </p>
+          </div>
+          <div
+            class="tab-panel"
+            id="panel-analysis"
+            role="tabpanel"
+            aria-labelledby="tab-analysis"
+            hidden
+          >
+            <div id="analysis-list"></div>
+            <p class="panel-note">
+              色と形の特徴を解析します。被写体や人物の認識はしません。v1ではEXIF回転・色補正情報は反映しません。
+            </p>
+          </div>
+        </div>
+      </section>
+    </dialog>
+    <dialog
+      id="mobile-guide"
+      class="mobile-dialog"
+      aria-labelledby="mobile-guide-title"
+      aria-describedby="mobile-preview-notice"
+    >
+      <header class="mobile-dialog-heading">
+        <div>
+          <p class="eyebrow">PLAY ON YOUR PHONE</p>
+          <h2 id="mobile-guide-title">スマホで遊ぶ</h2>
+        </div>
+        <button
+          id="mobile-guide-close"
+          type="button"
+          class="close-button"
+          aria-label="スマホ案内を閉じる"
+          autofocus
+        >
+          ×
+        </button>
+      </header>
+      <div class="mobile-guide-body">
+        <p id="mobile-preview-notice" class="mobile-preview-notice">
+          今のプレビューをスマホで開きます。サーバー起動中だけ使えるお試し用です。常設公開ではありません。
+        </p>
+        <div class="mobile-qr-wrap">
+          <canvas
+            id="mobile-qr"
+            width="256"
+            height="256"
+            hidden
+            role="img"
+            aria-label="ゲームをスマホで開くためのQRコード"
+          ></canvas>
+        </div>
+        <p id="mobile-link-status" role="status" aria-live="polite"></p>
+        <label class="mobile-link-label" for="mobile-link-url"
+          >ゲームのURL（写真・編成・ルーム情報は含みません）</label
+        >
+        <div class="mobile-link-controls">
+          <input
+            id="mobile-link-url"
+            type="url"
+            readonly
+            spellcheck="false"
+            autocomplete="off"
+          /><button id="mobile-copy" type="button" disabled>コピー</button>
+        </div>
+        <button id="mobile-share" type="button" hidden>URLを共有する ↗</button>
+        <details class="mobile-guide-help">
+          <summary>遊び方・開けないとき</summary>
+          <ul>
+            <li>
+              スマホのカメラでQRを読み取り、Safari／Chromeで開いてください。スマホでこの画面を見ている場合は、閉じてそのまま遊べます。
+            </li>
+            <li>
+              「デュエルを始める」でCPU戦へ。友達対戦は、双方が同じURLを開いて合言葉ルームに入ります。
+            </li>
+            <li>
+              PCの写真や編成は自動では移りません。スマホで写真を選ぶか、サンプルから始めてください。
+            </li>
+            <li>
+              写真はJPEG・PNGに対応。iPhoneのHEICはJPEG/PNGに変換してください。写真アプリでの変換・圧縮によって能力や技が変わることがあります。
+            </li>
+            <li>
+              画面が開けない場合は、サーバーの起動状態とArena側のプレビュー共有・アクセス設定を確認してください。HTTPやlocalhostではなく、HTTPSのURLを使います。
+            </li>
+            <li>
+              オンライン戦で別アプリへ移動すると切断されることがあります。90秒以内に戻ると復帰を試みます。
+            </li>
+          </ul>
+        </details>
+      </div>
+    </dialog>
+    <script type="module" src="/src/main.js"></script>
+    <dialog
+      id="vault-dialog"
+      class="vault-dialog"
+      aria-labelledby="vault-title"
+      aria-describedby="vault-status"
+    >
+      <header class="vault-heading">
+        <div>
+          <p class="eyebrow">THE LEGEND ARCHIVE / 01—10</p>
+          <h2 id="vault-title">伝説のカード図鑑</h2>
+        </div>
+        <button type="button" id="vault-close" aria-label="図鑑を閉じる">
+          ×
+        </button>
+      </header>
+      <nav
+        id="vault-filter"
+        class="vault-filter"
+        aria-label="図鑑の属性フィルター"
+      ></nav>
+      <div class="vault-layout">
+        <div id="vault-list" class="vault-list" aria-label="カードを選ぶ"></div>
+        <section
+          id="vault-detail"
+          class="vault-detail"
+          aria-label="選んだカードの能力と技"
+        ></section>
+      </div>
+      <footer class="vault-footer">
+        <div>
+          <a href="/strong-cards/strong-cards-10.zip" download
+            >10枚まとめてZIP保存 ↓</a
+          ><small>高能力の候補集。絶対に勝てるカードではありません。</small>
+        </div>
+        <p id="vault-status" role="status" aria-live="polite"></p>
+      </footer>
+    </dialog>
+    <div id="rare-awakening" class="rare-awakening" hidden aria-hidden="true">
+      <span class="awakening-ring"></span>
+      <div>
+        <small>RARE AWAKENING</small><strong></strong>
+        <p>レア技を持つカードが誕生</p>
+      </div>
+    </div>
+  </body>
+</html>

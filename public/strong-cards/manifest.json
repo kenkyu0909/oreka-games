@@ -1,0 +1,1037 @@
+{
+  "version": 1,
+  "rule": "photo-v3",
+  "date": "2026-10-11",
+  "method": "Pixel-grid optimization; not a global optimum. Final PNG verified with the actual game decoder.",
+  "counts": {
+    "fire": {
+      "searched": 14000,
+      "eligible": 188
+    },
+    "water": {
+      "searched": 14000,
+      "eligible": 144
+    },
+    "wind": {
+      "searched": 14000,
+      "eligible": 184
+    },
+    "earth": {
+      "searched": 14000,
+      "eligible": 198
+    },
+    "light": {
+      "searched": 14000,
+      "eligible": 87
+    },
+    "dark": {
+      "searched": 14000,
+      "eligible": 88
+    }
+  },
+  "cards": [
+    {
+      "id": "01-flame-dragon",
+      "name": "焔帝竜ヴァルカノス",
+      "role": "灼熱の特殊アタッカー",
+      "attribute": "fire",
+      "file": "originals/01-flame-dragon.png",
+      "preview": "previews/01-flame-dragon.jpg",
+      "bytes": 3774668,
+      "sha256": "e623a994a5287b3badbba8d6e0c4fa528a2698ddd8ce8f1af11fd6327d9a1d2a",
+      "width": 4000,
+      "height": 6000,
+      "recipe": {
+        "seed": 11410,
+        "score": 1640
+      },
+      "character": {
+        "version": "photo-v3",
+        "attribute": "fire",
+        "level": 11,
+        "stats": {
+          "hp": 313,
+          "attack": 212,
+          "defense": 190,
+          "specialAttack": 249,
+          "specialDefense": 216,
+          "speed": 231,
+          "critical": 77,
+          "resistance": 61,
+          "recovery": 69,
+          "piercing": 85
+        },
+        "moves": [
+          {
+            "id": "ember-fangs",
+            "name": "双炎牙",
+            "attribute": "fire",
+            "category": "物理",
+            "power": 30,
+            "pp": 12,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "2回連続で攻撃する。PPは1回分だけ消費。",
+            "hits": 2
+          },
+          {
+            "id": "radiant-drain",
+            "name": "生命の光輪",
+            "attribute": "light",
+            "category": "特殊",
+            "power": 55,
+            "pp": 10,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "与えたダメージの60%を基準にHP吸収。回復力で増減。",
+            "drain": 0.6
+          },
+          {
+            "id": "crystal-rest",
+            "name": "晶石の休息",
+            "attribute": "earth",
+            "category": "回復",
+            "power": null,
+            "pp": 5,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "通常回復量の75%を回復し、特殊防御を1段階上げる。",
+            "healScale": 0.75,
+            "stages": {
+              "specialDefenseStage": 1
+            },
+            "target": "self"
+          },
+          {
+            "id": "inferno-crown",
+            "name": "灼天の王冠",
+            "attribute": "fire",
+            "category": "特殊",
+            "power": 160,
+            "pp": 3,
+            "text": "威力160。攻撃後65%を基準にやけど。相手の耐性で軽減。",
+            "accuracy": 100,
+            "rules": 2,
+            "rarity": "rare",
+            "status": "burn",
+            "statusChance": 0.65
+          }
+        ],
+        "features": {
+          "brightness": 635,
+          "saturation": 990,
+          "contrast": 613,
+          "detail": 1000,
+          "symmetry": 1000,
+          "diversity": 1000,
+          "red": 564,
+          "green": 425,
+          "blue": 10,
+          "resolution": 1000,
+          "portrait": 600
+        }
+      }
+    },
+    {
+      "id": "02-phoenix",
+      "name": "不死鳥フェニクシア",
+      "role": "炎の連撃アタッカー",
+      "attribute": "fire",
+      "file": "originals/02-phoenix.png",
+      "preview": "previews/02-phoenix.jpg",
+      "bytes": 3857405,
+      "sha256": "a6260e14542a9e8693c05c47cde2de504cb205275e376e63900f9e369693147f",
+      "width": 4000,
+      "height": 6000,
+      "recipe": {
+        "seed": 13662,
+        "score": 1613
+      },
+      "character": {
+        "version": "photo-v3",
+        "attribute": "fire",
+        "level": 11,
+        "stats": {
+          "hp": 299,
+          "attack": 229,
+          "defense": 196,
+          "specialAttack": 248,
+          "specialDefense": 210,
+          "speed": 231,
+          "critical": 88,
+          "resistance": 61,
+          "recovery": 68,
+          "piercing": 92
+        },
+        "moves": [
+          {
+            "id": "ash-break",
+            "name": "灰燼砕き",
+            "attribute": "fire",
+            "category": "物理",
+            "power": 55,
+            "pp": 10,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "攻撃後、相手の物理防御を1段階下げる。",
+            "stages": {
+              "defenseStage": -1
+            },
+            "target": "enemy"
+          },
+          {
+            "id": "night-drain",
+            "name": "夜喰らい",
+            "attribute": "dark",
+            "category": "物理",
+            "power": 65,
+            "pp": 8,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "与えたダメージの45%を基準にHP吸収。回復力で増減。",
+            "drain": 0.45
+          },
+          {
+            "id": "furnace",
+            "name": "灼熱の闘志",
+            "attribute": "fire",
+            "category": "補助",
+            "power": null,
+            "pp": 7,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "自分の物理攻撃を2段階上げる。",
+            "stages": {
+              "attackStage": 2
+            },
+            "target": "self"
+          },
+          {
+            "id": "phoenix-fangs",
+            "name": "不死鳥の双牙",
+            "attribute": "fire",
+            "category": "物理",
+            "power": 75,
+            "pp": 3,
+            "text": "威力75の2連撃。与えた実ダメージの15%を反動で受ける。",
+            "accuracy": 100,
+            "rules": 2,
+            "rarity": "rare",
+            "hits": 2,
+            "recoil": 0.15
+          }
+        ],
+        "features": {
+          "brightness": 574,
+          "saturation": 979,
+          "contrast": 805,
+          "detail": 1000,
+          "symmetry": 1000,
+          "diversity": 1000,
+          "red": 542,
+          "green": 439,
+          "blue": 19,
+          "resolution": 1000,
+          "portrait": 600
+        }
+      }
+    },
+    {
+      "id": "03-ocean-leviathan",
+      "name": "海神竜リヴァイア",
+      "role": "三連撃と吸収の海王",
+      "attribute": "water",
+      "file": "originals/03-ocean-leviathan.png",
+      "preview": "previews/03-ocean-leviathan.jpg",
+      "bytes": 3846399,
+      "sha256": "30f2702bb9893bee4a57cea10395ec442f678d49cdf3cc634e6ba6d0e326731b",
+      "width": 4000,
+      "height": 6000,
+      "recipe": {
+        "seed": 8079,
+        "score": 1671
+      },
+      "character": {
+        "version": "photo-v3",
+        "attribute": "water",
+        "level": 11,
+        "stats": {
+          "hp": 291,
+          "attack": 204,
+          "defense": 199,
+          "specialAttack": 244,
+          "specialDefense": 207,
+          "speed": 231,
+          "critical": 77,
+          "resistance": 63,
+          "recovery": 69,
+          "piercing": 85
+        },
+        "moves": [
+          {
+            "id": "aqua-siphon",
+            "name": "水命吸収",
+            "attribute": "water",
+            "category": "特殊",
+            "power": 60,
+            "pp": 10,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "与えたダメージの45%を基準にHP吸収。回復力で増減。",
+            "drain": 0.45
+          },
+          {
+            "id": "night-drain",
+            "name": "夜喰らい",
+            "attribute": "dark",
+            "category": "物理",
+            "power": 65,
+            "pp": 8,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "与えたダメージの45%を基準にHP吸収。回復力で増減。",
+            "drain": 0.45
+          },
+          {
+            "id": "cleansing-rain",
+            "name": "浄化の雨",
+            "attribute": "water",
+            "category": "回復",
+            "power": null,
+            "pp": 5,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "自分の状態異常を治し、通常回復量の65%を回復する。",
+            "cleanse": true,
+            "healScale": 0.65,
+            "target": "self"
+          },
+          {
+            "id": "leviathan-torrent",
+            "name": "海神の三叉流",
+            "attribute": "water",
+            "category": "特殊",
+            "power": 50,
+            "pp": 3,
+            "text": "威力50の3連撃。実ダメージの40%を基準に吸収。回復力で増減。",
+            "accuracy": 100,
+            "rules": 2,
+            "rarity": "rare",
+            "hits": 3,
+            "drain": 0.4
+          }
+        ],
+        "features": {
+          "brightness": 540,
+          "saturation": 933,
+          "contrast": 615,
+          "detail": 1000,
+          "symmetry": 1000,
+          "diversity": 1000,
+          "red": 45,
+          "green": 459,
+          "blue": 497,
+          "resolution": 1000,
+          "portrait": 600
+        }
+      }
+    },
+    {
+      "id": "04-frost-knight",
+      "name": "氷皇騎士グラシオン",
+      "role": "鈍足で流れを変える騎士",
+      "attribute": "water",
+      "file": "originals/04-frost-knight.png",
+      "preview": "previews/04-frost-knight.jpg",
+      "bytes": 3929747,
+      "sha256": "1b1e09191e82a0967b5e85e8d597fcd93058fa7338833bb3d6fd65b1ee00b3a7",
+      "width": 4000,
+      "height": 6000,
+      "recipe": {
+        "seed": 2457,
+        "score": 1624
+      },
+      "character": {
+        "version": "photo-v3",
+        "attribute": "water",
+        "level": 11,
+        "stats": {
+          "hp": 269,
+          "attack": 212,
+          "defense": 208,
+          "specialAttack": 247,
+          "specialDefense": 198,
+          "speed": 231,
+          "critical": 79,
+          "resistance": 61,
+          "recovery": 63,
+          "piercing": 86
+        },
+        "moves": [
+          {
+            "id": "aqua-siphon",
+            "name": "水命吸収",
+            "attribute": "water",
+            "category": "特殊",
+            "power": 60,
+            "pp": 10,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "与えたダメージの45%を基準にHP吸収。回復力で増減。",
+            "drain": 0.45
+          },
+          {
+            "id": "gale-step",
+            "name": "疾風の先駆け",
+            "attribute": "wind",
+            "category": "物理",
+            "power": 38,
+            "pp": 14,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "通常の技より先に攻撃する。先制技同士は素早さ順。",
+            "priority": 1
+          },
+          {
+            "id": "restore",
+            "name": "生命のしずく",
+            "attribute": null,
+            "category": "回復",
+            "power": null,
+            "pp": 5,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "自分のHPを回復。回復力が高いほど効果アップ。",
+            "healScale": 1,
+            "target": "self"
+          },
+          {
+            "id": "absolute-tide",
+            "name": "絶零の大潮",
+            "attribute": "water",
+            "category": "特殊",
+            "power": 110,
+            "pp": 3,
+            "text": "攻撃後、鈍足を狙う。基本成功率100%、相手の耐性で軽減。",
+            "accuracy": 100,
+            "rules": 2,
+            "rarity": "rare",
+            "status": "slow",
+            "statusChance": 1
+          }
+        ],
+        "features": {
+          "brightness": 449,
+          "saturation": 973,
+          "contrast": 641,
+          "detail": 1000,
+          "symmetry": 1000,
+          "diversity": 1000,
+          "red": 23,
+          "green": 440,
+          "blue": 537,
+          "resolution": 1000,
+          "portrait": 600
+        }
+      }
+    },
+    {
+      "id": "05-jade-dragon",
+      "name": "翠嵐竜エメラルディア",
+      "role": "防御を貫く特殊アタッカー",
+      "attribute": "wind",
+      "file": "originals/05-jade-dragon.png",
+      "preview": "previews/05-jade-dragon.jpg",
+      "bytes": 3900568,
+      "sha256": "c91f32d168ec5ad154f0e190179fb177fc97fa3f03d402354dd2295f3e575038",
+      "width": 4000,
+      "height": 6000,
+      "recipe": {
+        "seed": 619,
+        "score": 1656
+      },
+      "character": {
+        "version": "photo-v3",
+        "attribute": "wind",
+        "level": 11,
+        "stats": {
+          "hp": 283,
+          "attack": 243,
+          "defense": 202,
+          "specialAttack": 248,
+          "specialDefense": 204,
+          "speed": 231,
+          "critical": 97,
+          "resistance": 61,
+          "recovery": 77,
+          "piercing": 98
+        },
+        "moves": [
+          {
+            "id": "gale-step",
+            "name": "疾風の先駆け",
+            "attribute": "wind",
+            "category": "物理",
+            "power": 38,
+            "pp": 14,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "通常の技より先に攻撃する。先制技同士は素早さ順。",
+            "priority": 1
+          },
+          {
+            "id": "vacuum-cut",
+            "name": "真空裂き",
+            "attribute": "wind",
+            "category": "特殊",
+            "power": 65,
+            "pp": 9,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "技の効果で相手の有効な防御をさらに40%無視する。",
+            "ignoreDefense": 0.4
+          },
+          {
+            "id": "cleansing-rain",
+            "name": "浄化の雨",
+            "attribute": "water",
+            "category": "回復",
+            "power": null,
+            "pp": 5,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "自分の状態異常を治し、通常回復量の65%を回復する。",
+            "cleanse": true,
+            "healScale": 0.65,
+            "target": "self"
+          },
+          {
+            "id": "sky-rend",
+            "name": "天穹断裂",
+            "attribute": "wind",
+            "category": "特殊",
+            "power": 125,
+            "pp": 3,
+            "text": "威力125。相手の有効防御をさらに60%無視する。",
+            "accuracy": 100,
+            "rules": 2,
+            "rarity": "rare",
+            "ignoreDefense": 0.6
+          }
+        ],
+        "features": {
+          "brightness": 510,
+          "saturation": 982,
+          "contrast": 954,
+          "detail": 1000,
+          "symmetry": 1000,
+          "diversity": 1000,
+          "red": 423,
+          "green": 556,
+          "blue": 21,
+          "resolution": 1000,
+          "portrait": 600
+        }
+      }
+    },
+    {
+      "id": "06-storm-griffin",
+      "name": "神翼獣ゼファリオン",
+      "role": "先制二連撃の空の王",
+      "attribute": "wind",
+      "file": "originals/06-storm-griffin.png",
+      "preview": "previews/06-storm-griffin.jpg",
+      "bytes": 3785873,
+      "sha256": "805c5661b29fb2cfa3f9d07ea363985057c579ab712f48860cfc793807f8bafd",
+      "width": 4000,
+      "height": 6000,
+      "recipe": {
+        "seed": 3220,
+        "score": 1679
+      },
+      "character": {
+        "version": "photo-v3",
+        "attribute": "wind",
+        "level": 11,
+        "stats": {
+          "hp": 316,
+          "attack": 220,
+          "defense": 189,
+          "specialAttack": 249,
+          "specialDefense": 217,
+          "speed": 231,
+          "critical": 82,
+          "resistance": 61,
+          "recovery": 82,
+          "piercing": 88
+        },
+        "moves": [
+          {
+            "id": "gale-step",
+            "name": "疾風の先駆け",
+            "attribute": "wind",
+            "category": "物理",
+            "power": 38,
+            "pp": 14,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "通常の技より先に攻撃する。先制技同士は素早さ順。",
+            "priority": 1
+          },
+          {
+            "id": "radiant-drain",
+            "name": "生命の光輪",
+            "attribute": "light",
+            "category": "特殊",
+            "power": 55,
+            "pp": 10,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "与えたダメージの60%を基準にHP吸収。回復力で増減。",
+            "drain": 0.6
+          },
+          {
+            "id": "cleansing-rain",
+            "name": "浄化の雨",
+            "attribute": "water",
+            "category": "回復",
+            "power": null,
+            "pp": 5,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "自分の状態異常を治し、通常回復量の65%を回復する。",
+            "cleanse": true,
+            "healScale": 0.65,
+            "target": "self"
+          },
+          {
+            "id": "heavenly-twin-blades",
+            "name": "神速の双翼",
+            "attribute": "wind",
+            "category": "物理",
+            "power": 55,
+            "pp": 3,
+            "text": "通常技より先に、威力55の2連撃。先制技同士は素早さ順。",
+            "accuracy": 100,
+            "rules": 2,
+            "rarity": "rare",
+            "priority": 1,
+            "hits": 2
+          }
+        ],
+        "features": {
+          "brightness": 645,
+          "saturation": 987,
+          "contrast": 703,
+          "detail": 1000,
+          "symmetry": 1000,
+          "diversity": 1000,
+          "red": 439,
+          "green": 547,
+          "blue": 13,
+          "resolution": 1000,
+          "portrait": 600
+        }
+      }
+    },
+    {
+      "id": "07-titan",
+      "name": "大地神タイタノヴァ",
+      "role": "威力180の一撃型",
+      "attribute": "earth",
+      "file": "originals/07-titan.png",
+      "preview": "previews/07-titan.jpg",
+      "bytes": 3753698,
+      "sha256": "ecb9047d49e4385c658e62f9fb14b2637ce49945718f49dca91269624de8b973",
+      "width": 4000,
+      "height": 6000,
+      "recipe": {
+        "seed": 7827,
+        "score": 1698
+      },
+      "character": {
+        "version": "photo-v3",
+        "attribute": "earth",
+        "level": 11,
+        "stats": {
+          "hp": 320,
+          "attack": 227,
+          "defense": 187,
+          "specialAttack": 249,
+          "specialDefense": 219,
+          "speed": 231,
+          "critical": 86,
+          "resistance": 61,
+          "recovery": 78,
+          "piercing": 91
+        },
+        "moves": [
+          {
+            "id": "fault-pierce",
+            "name": "断層貫き",
+            "attribute": "earth",
+            "category": "物理",
+            "power": 70,
+            "pp": 8,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "技の効果で相手の有効な防御をさらに40%無視する。",
+            "ignoreDefense": 0.4
+          },
+          {
+            "id": "aqua-siphon",
+            "name": "水命吸収",
+            "attribute": "water",
+            "category": "特殊",
+            "power": 60,
+            "pp": 10,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "与えたダメージの45%を基準にHP吸収。回復力で増減。",
+            "drain": 0.45
+          },
+          {
+            "id": "restore",
+            "name": "生命のしずく",
+            "attribute": null,
+            "category": "回復",
+            "power": null,
+            "pp": 5,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "自分のHPを回復。回復力が高いほど効果アップ。",
+            "healScale": 1,
+            "target": "self"
+          },
+          {
+            "id": "worldbreaker",
+            "name": "星砕き",
+            "attribute": "earth",
+            "category": "物理",
+            "power": 180,
+            "pp": 2,
+            "text": "威力180の超重撃。命中90%。",
+            "accuracy": 90,
+            "rules": 2,
+            "rarity": "rare"
+          }
+        ],
+        "features": {
+          "brightness": 664,
+          "saturation": 990,
+          "contrast": 767,
+          "detail": 1000,
+          "symmetry": 1000,
+          "diversity": 1000,
+          "red": 491,
+          "green": 499,
+          "blue": 10,
+          "resolution": 1000,
+          "portrait": 600
+        }
+      }
+    },
+    {
+      "id": "08-quake-tiger",
+      "name": "金牙王ガイアファング",
+      "role": "物理防御を砕く猛獣",
+      "attribute": "earth",
+      "file": "originals/08-quake-tiger.png",
+      "preview": "previews/08-quake-tiger.jpg",
+      "bytes": 3924196,
+      "sha256": "c605132be8a95f036fa640deec0d135a9de308492374e20534c4390eda60a2b0",
+      "width": 4000,
+      "height": 6000,
+      "recipe": {
+        "seed": 8828,
+        "score": 1702
+      },
+      "character": {
+        "version": "photo-v3",
+        "attribute": "earth",
+        "level": 11,
+        "stats": {
+          "hp": 296,
+          "attack": 247,
+          "defense": 197,
+          "specialAttack": 248,
+          "specialDefense": 209,
+          "speed": 231,
+          "critical": 100,
+          "resistance": 61,
+          "recovery": 73,
+          "piercing": 100
+        },
+        "moves": [
+          {
+            "id": "fault-pierce",
+            "name": "断層貫き",
+            "attribute": "earth",
+            "category": "物理",
+            "power": 70,
+            "pp": 8,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "技の効果で相手の有効な防御をさらに40%無視する。",
+            "ignoreDefense": 0.4
+          },
+          {
+            "id": "night-drain",
+            "name": "夜喰らい",
+            "attribute": "dark",
+            "category": "物理",
+            "power": 65,
+            "pp": 8,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "与えたダメージの45%を基準にHP吸収。回復力で増減。",
+            "drain": 0.45
+          },
+          {
+            "id": "restore",
+            "name": "生命のしずく",
+            "attribute": null,
+            "category": "回復",
+            "power": null,
+            "pp": 5,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "自分のHPを回復。回復力が高いほど効果アップ。",
+            "healScale": 1,
+            "target": "self"
+          },
+          {
+            "id": "continental-ruin",
+            "name": "大陸崩壊",
+            "attribute": "earth",
+            "category": "物理",
+            "power": 120,
+            "pp": 3,
+            "text": "攻撃後、相手の物理防御を2段階下げる。",
+            "accuracy": 100,
+            "rules": 2,
+            "rarity": "rare",
+            "stages": {
+              "defenseStage": -2
+            },
+            "target": "enemy"
+          }
+        ],
+        "features": {
+          "brightness": 562,
+          "saturation": 977,
+          "contrast": 1000,
+          "detail": 1000,
+          "symmetry": 1000,
+          "diversity": 1000,
+          "red": 482,
+          "green": 496,
+          "blue": 22,
+          "resolution": 1000,
+          "portrait": 600
+        }
+      }
+    },
+    {
+      "id": "09-light-seraph",
+      "name": "創世天セラフィエル",
+      "role": "高HPと貫通光槍の守護者",
+      "attribute": "light",
+      "file": "originals/09-light-seraph.png",
+      "preview": "previews/09-light-seraph.jpg",
+      "bytes": 3800477,
+      "sha256": "2a925cc4d1a3d68d4876c994595812b6f877795f701f87b9e329195424528cae",
+      "width": 4000,
+      "height": 6000,
+      "recipe": {
+        "seed": 12276,
+        "score": 1585
+      },
+      "character": {
+        "version": "photo-v3",
+        "attribute": "light",
+        "level": 11,
+        "stats": {
+          "hp": 348,
+          "attack": 123,
+          "defense": 176,
+          "specialAttack": 178,
+          "specialDefense": 230,
+          "speed": 231,
+          "critical": 89,
+          "resistance": 91,
+          "recovery": 65,
+          "piercing": 92
+        },
+        "moves": [
+          {
+            "id": "radiant-drain",
+            "name": "生命の光輪",
+            "attribute": "light",
+            "category": "特殊",
+            "power": 55,
+            "pp": 10,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "与えたダメージの60%を基準にHP吸収。回復力で増減。",
+            "drain": 0.6
+          },
+          {
+            "id": "gale-step",
+            "name": "疾風の先駆け",
+            "attribute": "wind",
+            "category": "物理",
+            "power": 38,
+            "pp": 14,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "通常の技より先に攻撃する。先制技同士は素早さ順。",
+            "priority": 1
+          },
+          {
+            "id": "meditate",
+            "name": "魔力瞑想",
+            "attribute": null,
+            "category": "補助",
+            "power": null,
+            "pp": 7,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "自分の特殊攻撃を2段階上げる。",
+            "stages": {
+              "specialAttackStage": 2
+            },
+            "target": "self"
+          },
+          {
+            "id": "genesis-ray",
+            "name": "創世の光槍",
+            "attribute": "light",
+            "category": "特殊",
+            "power": 130,
+            "pp": 3,
+            "text": "威力130。相手の有効防御をさらに50%無視する。",
+            "accuracy": 100,
+            "rules": 2,
+            "rarity": "rare",
+            "ignoreDefense": 0.5
+          }
+        ],
+        "features": {
+          "brightness": 782,
+          "saturation": 229,
+          "contrast": 806,
+          "detail": 1000,
+          "symmetry": 1000,
+          "diversity": 1000,
+          "red": 337,
+          "green": 327,
+          "blue": 336,
+          "resolution": 1000,
+          "portrait": 600
+        }
+      }
+    },
+    {
+      "id": "10-shadow-reaper",
+      "name": "冥翼王ノクスレイヴ",
+      "role": "先制二連撃の冥王",
+      "attribute": "dark",
+      "file": "originals/10-shadow-reaper.png",
+      "preview": "previews/10-shadow-reaper.jpg",
+      "bytes": 3696619,
+      "sha256": "3e062a843a32d0c6189aa5c7e7294c650732f97e837865bed15c6a89c255682b",
+      "width": 4000,
+      "height": 6000,
+      "recipe": {
+        "seed": 3043,
+        "score": 1522
+      },
+      "character": {
+        "version": "photo-v3",
+        "attribute": "dark",
+        "level": 11,
+        "stats": {
+          "hp": 205,
+          "attack": 220,
+          "defense": 233,
+          "specialAttack": 249,
+          "specialDefense": 173,
+          "speed": 231,
+          "critical": 82,
+          "resistance": 61,
+          "recovery": 58,
+          "piercing": 88
+        },
+        "moves": [
+          {
+            "id": "shadow-ambush",
+            "name": "影の奇襲",
+            "attribute": "dark",
+            "category": "物理",
+            "power": 38,
+            "pp": 14,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "通常の技より先に攻撃する。先制技同士は素早さ順。",
+            "priority": 1
+          },
+          {
+            "id": "radiant-drain",
+            "name": "生命の光輪",
+            "attribute": "light",
+            "category": "特殊",
+            "power": 55,
+            "pp": 10,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "与えたダメージの60%を基準にHP吸収。回復力で増減。",
+            "drain": 0.6
+          },
+          {
+            "id": "purify",
+            "name": "解呪の息吹",
+            "attribute": null,
+            "category": "回復",
+            "power": null,
+            "pp": 5,
+            "accuracy": 100,
+            "rules": 2,
+            "text": "状態異常を治し、通常回復量の50%を回復する。",
+            "cleanse": true,
+            "healScale": 0.5,
+            "target": "self"
+          },
+          {
+            "id": "eclipse-execution",
+            "name": "冥王の双刃",
+            "attribute": "dark",
+            "category": "物理",
+            "power": 70,
+            "pp": 2,
+            "text": "先制で威力70の2連撃。実ダメージの20%を反動で受ける。",
+            "accuracy": 100,
+            "rules": 2,
+            "rarity": "rare",
+            "priority": 1,
+            "hits": 2,
+            "recoil": 0.2
+          }
+        ],
+        "features": {
+          "brightness": 179,
+          "saturation": 987,
+          "contrast": 697,
+          "detail": 1000,
+          "symmetry": 1000,
+          "diversity": 1000,
+          "red": 431,
+          "green": 498,
+          "blue": 71,
+          "resolution": 1000,
+          "portrait": 600
+        }
+      }
+    }
+  ]
+}

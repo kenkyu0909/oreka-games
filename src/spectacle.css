@@ -1,0 +1,282 @@
+/* Single-pass reveals, no strobe/loop. Their DOM never intercepts a control. */
+.rare-awakening {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, #1b102655, transparent 70%);
+}
+.rare-awakening[hidden] {
+  display: none;
+}
+.rare-awakening > div {
+  position: relative;
+  text-align: center;
+  width: min(600px, 95vw);
+  padding: 32px 16px;
+  border-block: 1px solid #f7d17daa;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #241a20f2 16%,
+    #241a20f2 84%,
+    transparent
+  );
+  box-shadow: 0 0 65px #f9c65924;
+  animation: awakening-type 2.6s ease both;
+}
+.rare-awakening small {
+  color: #f3d58e;
+  letter-spacing: 5px;
+  font: 600 15px var(--display);
+}
+.rare-awakening strong {
+  display: block;
+  color: #fff0c7;
+  text-shadow: 0 0 28px #ffd37688;
+  font-size: clamp(27px, 6vw, 52px);
+  margin: 14px 0 10px;
+  letter-spacing: 5px;
+}
+.rare-awakening p {
+  color: #d8c192;
+  font-size: 12px;
+  letter-spacing: 3px;
+  margin: 0;
+}
+.awakening-ring {
+  position: absolute;
+  width: 440px;
+  aspect-ratio: 1;
+  border: 1px solid #f2ca7d88;
+  box-shadow:
+    0 0 40px #e9ad5133,
+    inset 0 0 40px #e9ad5133;
+  transform: rotate(45deg);
+  animation: awakening-ring 2.6s ease-out both;
+}
+.awakening-ring:before,
+.awakening-ring:after {
+  content: "";
+  position: absolute;
+  inset: 25px;
+  border: 1px solid #f5d59744;
+  transform: rotate(22.5deg);
+}
+.awakening-ring:after {
+  inset: 55px;
+  transform: rotate(-22.5deg);
+}
+@keyframes awakening-type {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.94);
+  }
+  18%,
+  78% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-15px) scale(1.04);
+  }
+}
+@keyframes awakening-ring {
+  0% {
+    opacity: 0;
+    transform: rotate(30deg) scale(0.45);
+  }
+  25%,
+  70% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(65deg) scale(1.6);
+  }
+}
+.finisher-cut {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, #352915ce, #100d16bf 80%);
+  color: #ffdf94;
+  animation: finish-veil 1.2s both;
+}
+.finisher-cut:before {
+  content: "";
+  position: absolute;
+  width: 140%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #ffe1a4, transparent);
+  box-shadow: 0 0 25px #ffbc67;
+  transform: rotate(-16deg);
+  animation: finish-slash 1.2s ease-out both;
+}
+.finisher-cut strong {
+  z-index: 1;
+  font: 700 clamp(28px, 6vw, 70px) var(--display);
+  letter-spacing: 6px;
+  text-align: center;
+  line-height: 1;
+  text-shadow: 0 0 35px #efb45d;
+  animation: finish-word 1.2s ease-out both;
+}
+.finisher-cut small {
+  z-index: 1;
+  margin-top: 14px;
+  font-size: 14px;
+  letter-spacing: 8px;
+  color: #fff2cf;
+}
+.finisher-cut span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 24px;
+  background: linear-gradient(#ffedb6, transparent);
+  transform: rotate(calc(var(--i) * 30deg)) translateY(-65px);
+  animation: finish-sparks 1.2s ease-out both;
+}
+.arena-stage[data-effect="finish"] .fighter {
+  filter: saturate(0.25);
+}
+.arena-stage[data-effect="finish"] .fighter.effect-finish .duel-card {
+  opacity: 0.35;
+  transform: scale(0.96);
+}
+.result-lineup {
+  display: flex;
+  gap: 9px;
+  justify-content: center;
+  margin: 14px 0 4px;
+}
+.result-lineup img {
+  width: 48px;
+  height: 64px;
+  object-fit: cover;
+  border: 1px solid #7c6378;
+  border-radius: 3px;
+  opacity: 0.65;
+}
+.result-lineup img.is-active {
+  width: 52px;
+  height: 70px;
+  margin-top: -3px;
+  opacity: 1;
+  border: 2px solid #edc477;
+  box-shadow: 0 0 16px #d79e4733;
+}
+.result-banner.won {
+  border-top-color: #f8d48b;
+  background:
+    radial-gradient(ellipse at 50% 0%, #72532166, transparent 75%),
+    linear-gradient(145deg, #251d1bf7, #170e19fa);
+}
+.result-banner.won > p {
+  color: #ffe3a1;
+  text-shadow: 0 0 32px #d2a45455;
+}
+@keyframes finish-veil {
+  0% {
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes finish-word {
+  0% {
+    opacity: 0;
+    transform: scale(1.45);
+    letter-spacing: 18px;
+  }
+  24%,
+  84% {
+    opacity: 1;
+    transform: scale(1);
+    letter-spacing: 6px;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+@keyframes finish-slash {
+  0% {
+    transform: rotate(-16deg) scaleX(0);
+  }
+  28%,
+  100% {
+    transform: rotate(-16deg) scaleX(1);
+  }
+}
+@keyframes finish-sparks {
+  0% {
+    opacity: 0;
+    transform: rotate(calc(var(--i) * 30deg)) translateY(-35px);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(calc(var(--i) * 30deg)) translateY(-230px);
+  }
+}
+@media (max-width: 700px) {
+  .rare-awakening strong {
+    letter-spacing: 2px;
+  }
+  .rare-awakening small {
+    font-size: 12px;
+  }
+  .finisher-cut strong {
+    font-size: 30px;
+    letter-spacing: 3px;
+  }
+  .finisher-cut small {
+    font-size: 11px;
+  }
+  .result-lineup {
+    margin: 10px 0 0;
+  }
+  .result-lineup img {
+    width: 38px;
+    height: 50px;
+  }
+  .result-lineup img.is-active {
+    width: 42px;
+    height: 56px;
+  }
+}
+@media (max-height: 540px) {
+  .result-lineup {
+    display: none;
+  }
+}
+body[data-motion="off"] .rare-awakening,
+body[data-motion="off"] .finisher-cut {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rare-awakening,
+  .finisher-cut {
+    display: none;
+  }
+}
