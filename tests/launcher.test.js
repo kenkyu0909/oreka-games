@@ -70,3 +70,11 @@ test("batch launcher uses its own folder, keeps failures visible and disables ! 
   assert.match(bat, /pause/);
   assert.doesNotMatch(bat, /powershell|ExecutionPolicy|taskkill/i);
 });
+
+// npm's generated vite.cmd can misparse an ampersand in the checkout path.
+test("build uses the Vite Node entrypoint instead of its Windows shell shim", () => {
+  const pkg = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+  );
+  assert.equal(pkg.scripts.build, "node node_modules/vite/bin/vite.js build");
+});
