@@ -6,6 +6,17 @@ import { once } from "node:events";
 import { rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { fileURLToPath } from "node:url";
+// Put failure details in a check annotation as well as the downloadable runner log.
+process.on("uncaughtExceptionMonitor", (error) => {
+  if (process.env.GITHUB_ACTIONS) {
+    const detail = String(error.stack || error)
+      .slice(-12000)
+      .replaceAll("%", "%25")
+      .replaceAll("\r", "%0D")
+      .replaceAll("\n", "%0A");
+    console.error(`::error title=Launcher smoke failure::${detail}`);
+  }
+});
 const root = fileURLToPath(new URL("../", import.meta.url));
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const portProbe = createServer();
