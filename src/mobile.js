@@ -1,4 +1,5 @@
 import "./mobile.css";
+import { STATIC_HOSTING, ONLINE_UNAVAILABLE } from "./hosting.js";
 import { mobileLinkInfo } from "./mobile-link.js";
 
 export function initMobileGuide() {
@@ -10,6 +11,16 @@ export function initMobileGuide() {
   const canvas = $("mobile-qr"),
     copy = $("mobile-copy"),
     share = $("mobile-share");
+  if (STATIC_HOSTING) {
+    $("mobile-preview-notice").textContent =
+      "GitHub Pagesの公開版です。PCの起動やインストールなしで、スマホから写真カード作成・CPU戦を遊べます。";
+    $("mobile-online-help").textContent = ONLINE_UNAVAILABLE;
+    $("mobile-access-help").textContent =
+      "このHTTPSのURLをSafari／Chromeで開いてください。GitHubのファイル一覧や、ダウンロードしたindex.htmlでは遊べません。";
+    $("hosting-label").textContent = "SOLO WEB EDITION";
+    const home = document.querySelector('[data-home-action="online"] strong');
+    if (home) home.textContent = "友達対戦について";
+  }
   let link = null,
     generation = 0;
   function message(text) {
@@ -24,7 +35,7 @@ export function initMobileGuide() {
     dialog.showModal();
     $("mobile-guide-close").focus();
     try {
-      link = mobileLinkInfo(location.href);
+      link = mobileLinkInfo(location.href, import.meta.env.BASE_URL);
       input.value = link.url;
       if (!link.shareable) {
         message(
@@ -77,7 +88,9 @@ export function initMobileGuide() {
       // Invoke directly in the click handler to keep iOS's user-gesture permission.
       await navigator.share({
         title: "RE:FRAME — スマホで遊ぶ",
-        text: "写真で作るカードゲーム。サーバー起動中にアクセスできます。",
+        text: STATIC_HOSTING
+          ? "写真で作るカードゲーム。スマホのブラウザでCPU戦を遊べます。"
+          : "写真で作るカードゲーム。サーバー起動中にアクセスできます。",
         url: link.url,
       });
       message("共有画面を閉じました。相手のスマホでも同じURLから遊べます。");

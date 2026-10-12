@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  base: mode === "github-pages" ? "/oreka-games/" : "/",
   server: {
     host: "0.0.0.0",
     allowedHosts: [".e2b.app"],
@@ -27,4 +28,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

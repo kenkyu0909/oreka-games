@@ -34,7 +34,7 @@ test("photo-v2 three-hit skill exposes its effect, uses one PP and presents thre
   await page.locator("#battle-seed").fill("12345");
   await page.locator('[data-action="start-cpu"]').click();
   await expect(page.locator(".battle-move").first()).toContainText("三連水流");
-  await expect(page.locator(".battle-move").first()).toContainText("3連撃");
+  await expect(page.locator(".battle-move").first()).toContainText("3回攻撃");
   await expect(
     page.locator(".battle-move").first().locator(".move-base-power"),
   ).toHaveText("威力 22×3");

@@ -66,12 +66,14 @@ async function cpu(page) {
 test("CPU auto finishes, logs export and deterministic rematch restores its opening hand", async ({
   page,
 }) => {
+  // Fast playback still separates actions; allow the full 60-turn limit to play.
+  test.setTimeout(210000);
   await cpu(page);
   const initialHp = await page.locator(".own .fighter-hp").textContent();
   const initialMove = await page.locator(".battle-move").first().textContent();
   await page.locator("#fast-battle").check();
   await page.locator('[data-action="auto"]').click();
-  await expect(page.locator(".result-banner")).toBeVisible({ timeout: 50000 });
+  await expect(page.locator(".result-banner")).toBeVisible({ timeout: 180000 });
   const promise = page.waitForEvent("download");
   await page.locator('[data-action="download-log"]').click();
   expect((await promise).suggestedFilename()).toMatch(

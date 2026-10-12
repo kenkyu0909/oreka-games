@@ -98,5 +98,5 @@ for (let attempt = 0; attempt < 2; attempt++) {
   }
 }
 console.log(
-  "Launcher smoke passed: first install, cached restart, page + vault serving, port collision, shutdown.",
+  "Launcher smoke passed: first install, cached restart, page + original-pack serving, port collision, shutdown.",
 );

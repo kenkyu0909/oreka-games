@@ -41,7 +41,8 @@
           </button>
         </nav>
         <div class="header-tools">
-          <span class="network-label"><i></i> PRIVATE DUEL</span
+          <span class="network-label"
+            ><i></i> <span id="hosting-label">PRIVATE DUEL</span></span
           ><button
             id="motion-toggle"
             class="icon-button sound-toggle"
@@ -120,15 +121,15 @@
             <article class="display-card hero-card">
               <div class="display-heading">
                 <div>
-                  <small>LEGEND / PHOTO-V3</small>
-                  <h2>翠嵐の竜王</h2>
+                  <small>DARK / ORIGINAL ART</small>
+                  <h2>灰燼の守護者</h2>
                 </div>
-                <span>風</span>
+                <span>闇</span>
               </div>
               <div class="hero-art">
                 <img
-                  src="/strong-cards/previews/05-jade-dragon.jpg"
-                  alt="翠嵐竜エメラルディアのオリジナルイラスト"
+                  src="%BASE_URL%art/ember-wolf.jpg"
+                  alt="赤い残り火に包まれた白狼のオリジナルイメージアート"
                   fetchpriority="high"
                 /><span class="hero-rarity">PRISM FOIL</span>
               </div>
@@ -137,18 +138,10 @@
                 <p>静寂を裂き、運命を穿つ。</p>
               </div>
               <div class="display-footer">
-                <b>RE:FRAME</b><span>伝説のカード図鑑 ↗</span>
+                <b>RE:FRAME</b><span>IMAGE CARD / イメージ</span>
               </div>
-              <button
-                type="button"
-                class="hero-vault-hit"
-                data-open-vault
-                aria-label="伝説のカード図鑑を開く"
-                aria-haspopup="dialog"
-                aria-controls="vault-dialog"
-              ></button>
             </article>
-            <span class="showcase-label">タップして、伝説の10枚を見る ↗</span
+            <span class="showcase-label">EVERY PHOTO HAS A POWER.</span
             ><span class="floating-spark spark-a">✦</span
             ><span class="floating-spark spark-b">✧</span>
           </div>
@@ -197,15 +190,6 @@
               </div>
               <button class="sample-button" id="sample-button">
                 ↻ サンプルで試す
-              </button>
-              <button
-                type="button"
-                class="vault-open"
-                data-open-vault
-                aria-haspopup="dialog"
-                aria-controls="vault-dialog"
-              >
-                ★ 伝説のカード図鑑 · 10枚を見る ↗
               </button>
               <aside class="customize-panel">
                 <label for="name-input">カード名 <span>18文字まで</span></label
@@ -484,7 +468,9 @@
               スマホのカメラでQRを読み取り、Safari／Chromeで開いてください。スマホでこの画面を見ている場合は、閉じてそのまま遊べます。
             </li>
             <li>
-              「デュエルを始める」でCPU戦へ。友達対戦は、双方が同じURLを開いて合言葉ルームに入ります。
+              <span id="mobile-online-help"
+                >「デュエルを始める」でCPU戦へ。友達対戦は、双方が同じURLを開いて合言葉ルームに入ります。</span
+              >
             </li>
             <li>
               PCの写真や編成は自動では移りません。スマホで写真を選ぶか、サンプルから始めてください。
@@ -493,7 +479,9 @@
               写真はJPEG・PNGに対応。iPhoneのHEICはJPEG/PNGに変換してください。写真アプリでの変換・圧縮によって能力や技が変わることがあります。
             </li>
             <li>
-              画面が開けない場合は、サーバーの起動状態とArena側のプレビュー共有・アクセス設定を確認してください。HTTPやlocalhostではなく、HTTPSのURLを使います。
+              <span id="mobile-access-help"
+                >画面が開けない場合は、サーバーの起動状態とArena側のプレビュー共有・アクセス設定を確認してください。HTTPやlocalhostではなく、HTTPSのURLを使います。</span
+              >
             </li>
             <li>
               オンライン戦で別アプリへ移動すると切断されることがあります。90秒以内に戻ると復帰を試みます。
@@ -503,43 +491,6 @@
       </div>
     </dialog>
     <script type="module" src="/src/main.js"></script>
-    <dialog
-      id="vault-dialog"
-      class="vault-dialog"
-      aria-labelledby="vault-title"
-      aria-describedby="vault-status"
-    >
-      <header class="vault-heading">
-        <div>
-          <p class="eyebrow">THE LEGEND ARCHIVE / 01—10</p>
-          <h2 id="vault-title">伝説のカード図鑑</h2>
-        </div>
-        <button type="button" id="vault-close" aria-label="図鑑を閉じる">
-          ×
-        </button>
-      </header>
-      <nav
-        id="vault-filter"
-        class="vault-filter"
-        aria-label="図鑑の属性フィルター"
-      ></nav>
-      <div class="vault-layout">
-        <div id="vault-list" class="vault-list" aria-label="カードを選ぶ"></div>
-        <section
-          id="vault-detail"
-          class="vault-detail"
-          aria-label="選んだカードの能力と技"
-        ></section>
-      </div>
-      <footer class="vault-footer">
-        <div>
-          <a href="/strong-cards/strong-cards-10.zip" download
-            >10枚まとめてZIP保存 ↓</a
-          ><small>高能力の候補集。絶対に勝てるカードではありません。</small>
-        </div>
-        <p id="vault-status" role="status" aria-live="polite"></p>
-      </footer>
-    </dialog>
     <div id="rare-awakening" class="rare-awakening" hidden aria-hidden="true">
       <span class="awakening-ring"></span>
       <div>

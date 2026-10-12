@@ -1,0 +1,220 @@
+/* Battle readability: size the cards around the viewport, not a fixed bottom tray.
+   Keep this layout layer separate from the original card/effect artwork. */
+.battle-move .move-explanation {
+  margin: 5px 0 0;
+  color: #f3e5ec;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+}
+.battle-move > div {
+  width: 100%;
+  min-width: 0;
+}
+.battle-move .move-button-heading > b {
+  white-space: normal;
+  overflow: visible;
+  font-size: 15px;
+}
+.battle-move .move-button-meta > span {
+  font-size: 10px;
+  color: #c5a9b8;
+}
+.battle-move:disabled {
+  opacity: 0.7;
+}
+.arena-stage .fighter.is-acting .duel-card {
+  outline: 3px solid #ffe7a1;
+  outline-offset: 3px;
+  box-shadow: 0 0 30px #ffd17850;
+}
+.arena-stage .turn-ribbon {
+  max-width: calc(100% - 12px);
+  padding: 6px 12px;
+  gap: 10px;
+}
+.arena-stage .turn-ribbon b {
+  font: 800 15px/1.3 sans-serif;
+  letter-spacing: 0.03em;
+}
+.arena-stage .turn-ribbon span {
+  font-size: 12px;
+}
+.arena-stage .turn-ribbon small {
+  display: inline;
+  font-size: 10px;
+  color: #e6c8a5;
+}
+.arena-stage[data-motion="false"] *,
+.arena-stage[data-motion="false"] *::before,
+.arena-stage[data-motion="false"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+@media (min-width: 1000px) {
+  .battle-app.is-live {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 26%);
+    grid-template-rows: 32px minmax(0, 1fr) 64px;
+    gap: 10px;
+  }
+  .battle-topline {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .arena-stage {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 44px 8px 8px;
+  }
+  .battle-message {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .command-panel {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    padding: 0 12px 10px;
+    overflow-y: auto;
+  }
+  .command-toolbar {
+    gap: 8px;
+  }
+  .command-toolbar > div > button {
+    min-width: 70px;
+    padding: 0 10px;
+  }
+  .command-toolbar > .text-button {
+    font-size: 11px;
+  }
+  .move-buttons {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, minmax(min-content, 1fr));
+    gap: 8px;
+  }
+  .battle-move {
+    padding: 9px 12px;
+    min-height: 96px;
+  }
+  .move-base-power {
+    font-size: 21px;
+  }
+  .command-bottom {
+    height: auto;
+    flex: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .command-bottom > div {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .battle-prompt {
+    max-width: none;
+    white-space: normal;
+    font-size: 10px;
+  }
+  .fast-toggle,
+  .auto-button {
+    font-size: 10px;
+  }
+  .arena-stage .duel-card {
+    height: min(calc(100cqh - 70px), calc(75cqw - 30px), 680px);
+  }
+  .arena-stage .fighter-hud {
+    max-width: 400px;
+  }
+  .own-bench {
+    flex-direction: column;
+  }
+  .bench-card {
+    min-height: 100px;
+  }
+}
+@media (max-width: 999px) {
+  .battle-app.is-live {
+    height: auto;
+    min-height: 100%;
+    grid-template-columns: 1fr;
+    grid-template-rows: 29px minmax(330px, 1fr) 48px auto;
+  }
+  .command-panel {
+    padding: 0 8px 6px;
+  }
+  .move-buttons {
+    flex: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, auto);
+  }
+  .battle-move {
+    min-height: 94px;
+    padding: 7px;
+    align-items: start;
+  }
+  .command-bottom {
+    flex: none;
+  }
+}
+@media (max-width: 720px) {
+  .battle-app.is-live {
+    grid-template-rows: 27px minmax(
+        min(340px, calc(75vw + 36px)),
+        1fr
+      ) 44px auto;
+  }
+  .arena-stage .duel-card {
+    height: min(calc(100cqh - 49px), calc(75cqw - 18px), 420px);
+  }
+  .battle-move .move-button-heading > b {
+    font-size: 12px;
+  }
+  .battle-move .move-button-meta > span {
+    font-size: 9px;
+  }
+  .battle-move .move-explanation {
+    font-size: 11px;
+    line-height: 1.4;
+    margin-top: 4px;
+  }
+  .move-base-power {
+    font-size: 16px;
+  }
+  .move-current-pp {
+    font-size: 10px;
+  }
+  .arena-stage .turn-ribbon {
+    padding: 5px 8px;
+    gap: 6px;
+  }
+  .arena-stage .turn-ribbon b {
+    font-size: 12px;
+  }
+  .arena-stage .turn-ribbon span {
+    font-size: 10px;
+  }
+  .arena-stage .turn-ribbon small {
+    display: none;
+  }
+  .command-bottom > div {
+    gap: 8px;
+  }
+  .fast-toggle {
+    font-size: 9px;
+  }
+  .battle-prompt {
+    display: none;
+  }
+  .command-bottom {
+    justify-content: flex-end;
+  }
+}
+@media (max-height: 570px) and (min-width: 1000px) {
+  .battle-app.is-live {
+    height: 650px;
+    min-height: 650px;
+  }
+}

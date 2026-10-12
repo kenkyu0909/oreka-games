@@ -1,4 +1,6 @@
 import "./battle.css";
+import "./readability.css";
+import { STATIC_HOSTING, ONLINE_UNAVAILABLE } from "../hosting.js";
 import {
   createBattle,
   resolveTurn,
@@ -39,6 +41,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
     queued: 0,
     animating: false,
     presentation: null,
+    playback: null,
     effect: null,
     latest: "",
     party: [],
@@ -100,6 +103,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
     animationEpoch++;
     model.animating = false;
     model.presentation = null;
+    model.playback = null;
     model.effect = null;
     if (model.battle)
       model.latest =
@@ -151,7 +155,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
     }),
   );
   document.addEventListener("reframe-motion-change", () => {
-    if (!effects.motion) skipTransition();
+    // Motion settings control decoration, not the readable action sequence.
     render();
     scheduleAuto();
   });
@@ -248,30 +252,16 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
       !previous ||
       previous.sequence === next.sequence ||
       model.view !== "battle" ||
-      model.fast ||
-      !effects.motion ||
       model.sheet ||
       model.confirm
     ) {
       model.presentation = null;
+      model.playback = null;
       model.effect = null;
       model.animating = false;
       model.latest =
         next.log.filter((e) => !e.text.startsWith("──")).at(-1)?.text ||
         "デュエル開始！";
-      // Reduced visual motion must not silently turn off the separate audio preference.
-      if (
-        previous &&
-        previous.sequence !== next.sequence &&
-        model.view === "battle" &&
-        !model.fast &&
-        !effects.motion
-      ) {
-        const event = next.log
-          .slice(previous.log.length)
-          .find((e) => ["damage", "heal", "switch"].includes(e.kind));
-        if (event) effects.play(event.kind);
-      }
       render();
       return;
     }
@@ -280,9 +270,42 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
     const entries = next.log
       .slice(previous.log.length)
       .filter((e) => !e.text.startsWith("──"));
+    model.playback = {
+      order: entries
+        .filter((e) => e.kind === "move" || e.kind === "switch")
+        .map((e) => e.side),
+      index: 0,
+      actor: null,
+      phase: "start",
+      name: "",
+    };
+    // Even reduced motion / fast mode shows each action and its HP update separately.
+    const pause = (normal, quiet, fast) =>
+      sleep(model.fast ? fast : effects.motion ? normal : quiet);
     let attack = null;
     for (const [entryIndex, entry] of entries.entries()) {
       if (epoch !== animationEpoch || model.battle !== next) return;
+      if (entry.kind === "move" || entry.kind === "switch") {
+        if (model.playback.index) {
+          model.effect = null;
+          model.playback.actor = null;
+          model.playback.phase = "handoff";
+          model.latest = "先の行動が終了。続いて、次のカードが行動します。";
+          render();
+          await pause(420, 350, 150);
+          if (epoch !== animationEpoch || model.battle !== next) return;
+        }
+        model.playback.index++;
+        model.playback.actor = entry.side;
+        model.playback.phase = "action";
+        model.playback.name =
+          entry.kind === "switch" ? "カードを交代" : entry.name;
+        attack = null;
+      } else if (entry.cause === "status") {
+        model.playback.actor = null;
+        model.playback.phase = "status";
+        attack = null;
+      }
       model.latest = entry.text;
       if (entry.kind === "move") {
         attack = entry;
@@ -293,7 +316,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
           ].pp[entry.moveIndex]--;
         render();
         effects.play("charge");
-        await sleep(820);
+        await pause(820, 700, 250);
         if (epoch !== animationEpoch || model.battle !== next) return;
         const kind =
           entry.category === "回復"
@@ -310,7 +333,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
         };
         render();
         effects.play(kind === "strike" ? "move" : "heal");
-        await sleep(640);
+        await pause(640, 100, 100);
         continue;
       }
       const priorHp =
@@ -320,6 +343,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
       model.effect = entry.kind
         ? { attribute: attack?.attribute, attackerSide: attack?.side, ...entry }
         : null;
+      if (model.playback.phase === "action") model.playback.phase = "result";
       const decisive = isFinalKnockout(next, entries, entryIndex);
       if (decisive)
         model.effect = {
@@ -341,7 +365,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
         model.presentation.teams[entry.side][entry.index].hp = entry.hp;
       render();
       if (entry.kind) effects.play(decisive ? "finish" : entry.kind);
-      if (priorHp !== null) {
+      if (priorHp !== null && effects.motion && !model.fast) {
         const fighter = model.presentation.teams[entry.side][entry.index];
         const max = fighter.card.character.stats.hp;
         const hud = root.querySelector(`.fighter[data-side="${entry.side}"]`);
@@ -355,7 +379,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
             { duration: 650, easing: "ease-out" },
           );
       }
-      await sleep(
+      await pause(
         decisive
           ? 1200
           : ["damage", "heal"].includes(entry.kind)
@@ -369,10 +393,13 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
                 : entry.kind === "critical"
                   ? 500
                   : 180,
+        priorHp !== null ? 600 : entry.kind ? 300 : 120,
+        priorHp !== null ? 250 : entry.kind ? 130 : 60,
       );
     }
     if (epoch !== animationEpoch || model.battle !== next) return;
     model.presentation = null;
+    model.playback = null;
     model.effect = null;
     model.animating = false;
     render();
@@ -530,6 +557,11 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
     model.connected = false;
   }
   function connectRoom(message) {
+    if (STATIC_HOSTING) {
+      model.error = ONLINE_UNAVAILABLE;
+      render();
+      return;
+    }
     const sessionEpoch = ++roomEpoch;
     model.netBusy = true;
     model.error = "";
@@ -698,10 +730,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
       model.difficulty = event.target.value;
     if (event.target.id === "fast-battle") {
       model.fast = event.target.checked;
-      if (model.fast && model.animating) {
-        skipTransition();
-        render();
-      }
+      render();
       scheduleAuto();
     }
   });
@@ -882,7 +911,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
       event.returnValue = "";
     }
   });
-  const session = savedSession();
+  const session = STATIC_HOSTING ? null : savedSession();
   if (session) {
     model.mode = "online";
     navigate("battle");

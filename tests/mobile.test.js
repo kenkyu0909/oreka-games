@@ -51,3 +51,21 @@ test("unsupported schemes and malformed URLs fail before any copy or QR generati
     assert.throws(() => mobileLinkInfo(url));
   }
 });
+
+test("Pages QR preserves the configured repository path without leaking query data", () => {
+  assert.equal(
+    mobileLinkInfo(
+      "https://kenkyu0909.github.io/oreka-games/?room=SECRET#creator",
+      "/oreka-games/",
+    ).url,
+    "https://kenkyu0909.github.io/oreka-games/",
+  );
+  for (const base of [
+    "//evil.example/",
+    "/../",
+    "/a/../../",
+    "/x/?secret=yes",
+    "https://evil.example/",
+  ])
+    assert.throws(() => mobileLinkInfo("https://kenkyu0909.github.io/", base));
+});

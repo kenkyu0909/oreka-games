@@ -268,3 +268,8 @@ html {
     line-height: 1.2;
   }
 }
+
+/* Decorative orbit rings must not widen a phone viewport in landscape. */
+.home-screen {
+  overflow: clip;
+}

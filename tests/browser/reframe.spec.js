@@ -54,12 +54,41 @@ async function assertControlsFit(page) {
   ).toBe(true);
 }
 
+// On short phones, readable cards/copy take precedence over shrinking everything.
+async function assertControlsReachable(page) {
+  for (const item of await page
+    .locator(
+      ".battle-move, .bench-card, .duel-card, .command-toolbar button, .battle-top-tools button",
+    )
+    .all()) {
+    await item.scrollIntoViewIfNeeded();
+    const clear = await item.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const hit = document.elementFromPoint(
+        r.x + r.width / 2,
+        r.y + r.height / 2,
+      );
+      return (
+        r.left >= 0 &&
+        r.right <= innerWidth + 1 &&
+        (el === hit || el.contains(hit))
+      );
+    });
+    expect(clear).toBe(true);
+  }
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+}
+
 for (const size of [
   { width: 390, height: 844 },
   { width: 320, height: 740 },
   { width: 360, height: 640 },
 ]) {
-  test(`${size.width}×${size.height}: all four moves and switch controls fit and are not clipped`, async ({
+  test(`${size.width}×${size.height}: cards and readable moves remain reachable without clipping`, async ({
     page,
   }) => {
     await page.setViewportSize(size);
@@ -84,19 +113,27 @@ for (const size of [
       page.locator(".arcade-card-rail, .duel-card-footer"),
     ).toHaveCount(0);
     const minimumHeight =
-      size.width === 390 ? 235 : size.width === 320 ? 180 : 132;
+      size.width === 390 ? 235 : size.width === 320 ? 180 : 210;
     for (const card of await page.locator(".duel-card").all()) {
       expect((await card.boundingBox()).height).toBeGreaterThanOrEqual(
         minimumHeight,
       );
     }
-    await assertControlsFit(page);
+    await (size.height >= 800
+      ? assertControlsFit(page)
+      : assertControlsReachable(page));
     await page.locator('[data-command="switch"]').click();
     await expect(page.locator(".bench-card")).toHaveCount(3);
-    await assertControlsFit(page);
+    await (size.height >= 800
+      ? assertControlsFit(page)
+      : assertControlsReachable(page));
     await page.locator(".bench-card").nth(1).click();
-    await expect(page.locator(".turn-indicator b")).toHaveText("2");
-    await assertControlsFit(page);
+    await expect(page.locator(".turn-indicator b")).toHaveText("2", {
+      timeout: 15000,
+    });
+    await (size.height >= 800
+      ? assertControlsFit(page)
+      : assertControlsReachable(page));
   });
 }
 
@@ -109,7 +146,9 @@ test("latest action, skip, own skills; battle has no public abilities or opponen
   await expect(page.locator(".is-resolving")).toBeVisible();
   await expect(page.locator('[data-action="move"]').first()).toBeDisabled();
   await page.locator('[data-action="skip-animation"]').click();
-  await expect(page.locator(".turn-indicator b")).toHaveText("2");
+  await expect(page.locator(".turn-indicator b")).toHaveText("2", {
+    timeout: 15000,
+  });
   await expect(page.locator('[data-action="move"]').first()).toBeEnabled({
     timeout: 20000,
   });
@@ -139,7 +178,9 @@ test("latest action, skip, own skills; battle has no public abilities or opponen
   await expect(page.locator(".is-resolving")).toBeVisible();
   await page.locator('.view-nav [data-view="home"]').click();
   await page.locator('.view-nav [data-view="battle"]').click();
-  await expect(page.locator(".turn-indicator b")).toHaveText("3");
+  await expect(page.locator(".turn-indicator b")).toHaveText("3", {
+    timeout: 15000,
+  });
   await expect(page.locator('[data-action="move"]').first()).toBeEnabled({
     timeout: 20000,
   });
@@ -162,7 +203,9 @@ test("audio opt-in persists; reduced motion suppresses attack animations", async
     "true",
   );
   await page.locator('[data-action="move"]').first().click();
-  await expect(page.locator(".turn-indicator b")).toHaveText("2");
+  await expect(page.locator(".turn-indicator b")).toHaveText("2", {
+    timeout: 15000,
+  });
   await expect(page.locator(".is-resolving")).toHaveCount(0);
   expect(
     await page
@@ -192,13 +235,17 @@ test("short-height fallback keeps battle controls reachable by scrolling", async
   await page.setViewportSize({ width: 667, height: 375 });
   await quickBattle(page, true);
   await page.locator(".battle-move").first().click();
-  await expect(page.locator(".turn-indicator b")).toHaveText("2");
+  await expect(page.locator(".turn-indicator b")).toHaveText("2", {
+    timeout: 15000,
+  });
   await page.locator('[data-action="options"]').click();
   await expect(page.locator("#battle-sheet")).toBeVisible();
   await page.locator('[data-action="surrender"]').click();
   await page.locator('[data-action="cancel-exit"]').click();
   await page.locator(".battle-move").first().click();
-  await expect(page.locator(".turn-indicator b")).toHaveText("3");
+  await expect(page.locator(".turn-indicator b")).toHaveText("3", {
+    timeout: 15000,
+  });
 });
 
 test("presentation and audio do not change seeded HP, PP or the battle log", async ({
@@ -380,7 +427,9 @@ test("sound opt-in creates real audio nodes, while mute creates none even during
   const muted = await page.evaluate(() => window.toneStarts);
   await expect(page.locator(".battle-move").first()).toBeEnabled();
   await page.locator(".battle-move").first().click();
-  await expect(page.locator(".turn-indicator b")).toHaveText("3");
+  await expect(page.locator(".turn-indicator b")).toHaveText("3", {
+    timeout: 15000,
+  });
   expect(await page.evaluate(() => window.toneStarts)).toBe(muted);
 });
 

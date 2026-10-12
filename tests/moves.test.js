@@ -508,3 +508,31 @@ test("90 modern CPU games complete legally, deterministically and with bounded H
       assert.ok(state.turn <= 60);
     }
 });
+
+test("presentation metadata distinguishes end-turn status damage from a healing move cleanse", () => {
+  let state = battle("purify");
+  activeFighter(state, 0).status = "poison";
+  activeFighter(state, 0).statusTurns = 3;
+  let next = resolveTurn(state, [action(), action()]);
+  const cleanse = next.log.find((e) => e.kind === "cleanse");
+  assert.ok(cleanse);
+  assert.equal(
+    cleanse.cause,
+    undefined,
+    "a move cleanse remains part of its actor action",
+  );
+
+  state = battle("wind-strike");
+  activeFighter(state, 1).status = "burn";
+  activeFighter(state, 1).statusTurns = 1;
+  next = resolveTurn(state, [action(), action()]);
+  const tick = next.log.filter((e) => e.cause === "status");
+  assert.equal(tick.length, 3);
+  assert.equal(tick[1].kind, "damage");
+  assert.equal(
+    tick[1].amount,
+    25,
+    "400 HP / 16; presentation does not alter damage",
+  );
+  assert.equal(tick[2].kind, "cleanse");
+});

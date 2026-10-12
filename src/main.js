@@ -8,7 +8,6 @@ import { createSample } from "./sample.js";
 import { exportCard } from "./export.js";
 import { effects } from "./effects.js";
 import { initMobileGuide } from "./mobile.js";
-import { initVault } from "./vault.js";
 import { awakenRareCard, clearAwakening } from "./spectacle.js";
 
 initMobileGuide();
@@ -26,9 +25,6 @@ const status = (message, error = false) => {
 
 function setBusy(value) {
   processing = value;
-  document.querySelectorAll("[data-open-vault]").forEach((button) => {
-    button.disabled = value || exporting;
-  });
   $("upload-button").disabled = value;
   $("sample-button").disabled = value;
   $("download-button").disabled = value || exporting || !current;
@@ -115,7 +111,7 @@ async function previewFromResult(result) {
   return { url, image };
 }
 
-async function loadPhoto(file, sampleName = null, source = null) {
+async function loadPhoto(file, sampleName = null) {
   if (!file || processing || exporting) return;
   if (!globalThis.crypto?.subtle) {
     status(
@@ -137,14 +133,6 @@ async function loadPhoto(file, sampleName = null, source = null) {
   status("写真の色と形を解析しています。画像は外部に送信されません。");
   try {
     const result = await runAnalysis(await file.arrayBuffer());
-    if (
-      source &&
-      (result.fingerprint !== source.sha256 ||
-        JSON.stringify(result.character) !== JSON.stringify(source.character))
-    )
-      throw new Error(
-        "原本と図鑑の能力が一致しません。ページを更新してください。",
-      );
     const { url, image } = await previewFromResult(result);
     const random = new Uint32Array(1);
     crypto.getRandomValues(random);
@@ -166,11 +154,9 @@ async function loadPhoto(file, sampleName = null, source = null) {
       ? `${sampleName}のサンプルイラスト`
       : "選択した写真から作成したカード";
     if (previousUrl) URL.revokeObjectURL(previousUrl);
-    $("photo-label").textContent = source
-      ? "LEGEND ARCHIVE"
-      : sampleName
-        ? "SAMPLE IMAGE"
-        : "YOUR ORIGINAL PHOTO";
+    $("photo-label").textContent = sampleName
+      ? "SAMPLE IMAGE"
+      : "YOUR ORIGINAL PHOTO";
     $("card-name").textContent = name;
     $("name-input").value = name;
     $("card-number").textContent =
@@ -219,11 +205,9 @@ async function loadPhoto(file, sampleName = null, source = null) {
     document.dispatchEvent(new CustomEvent("oreka-card-ready"));
     const rare = character.moves.find((m) => m.rarity === "rare");
     status(
-      (source
-        ? "図鑑の原本からカードを作成しました。「チームに追加」で編成できます。"
-        : sampleName
-          ? "サンプルはオリジナルの図形イラストです。自分の写真でも試してみよう。"
-          : "カードができました。元の写真は、再生成のために残しておいてください。") +
+      (sampleName
+        ? "サンプルはオリジナルの図形イラストです。自分の写真でも試してみよう。"
+        : "カードができました。元の写真は、再生成のために残しておいてください。") +
         (rare ? ` ★ レア技：${rare.name}` : ""),
     );
     return true;
@@ -295,9 +279,6 @@ $("download-button").addEventListener("click", async () => {
   $("download-button").disabled = true;
   $("upload-button").disabled = true;
   $("sample-button").disabled = true;
-  document.querySelectorAll("[data-open-vault]").forEach((button) => {
-    button.disabled = true;
-  });
   try {
     await exportCard({ ...current, character: current.character });
     status(
@@ -383,9 +364,5 @@ initBattleUI({
       URL.revokeObjectURL(url);
     }
   },
-});
-initVault({
-  load: (file, card) => loadPhoto(file, card.name, card),
-  isBusy: () => processing || exporting,
 });
 showSample();

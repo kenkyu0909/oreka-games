@@ -1,8 +1,11 @@
+import { STATIC_HOSTING, ONLINE_UNAVAILABLE } from "../hosting.js";
 import { RARE_MOVE_LIBRARY } from "../rare-moves.js";
 import { ATTRIBUTES } from "../game.js";
+import { moveSummary, moveCaution } from "../move-description.js";
 import { moveTags } from "../moves.js";
 import {
   activeFighter,
+  recoveryAmount,
   availableActions,
   effectiveness,
   STATUS_LABELS,
@@ -27,6 +30,8 @@ export const stateFor = (model) => model.presentation || model.battle;
 const percent = (f) => Math.max(0, (f.hp / f.card.character.stats.hp) * 100);
 const movesDescription = (move) =>
   move.text +
+  " " +
+  moveCaution(move) +
   (move.id.endsWith("-wave")
     ? ` 追加効果：${STATUS_LABELS[SECONDARY[move.attribute]]}。`
     : "");
@@ -69,7 +74,9 @@ export function renderLobby(model) {
           .join(
             "",
           )}</select><p class="difficulty-hint">能力は同じ。技・回復・交代の判断で強さが変わります。</p><button class="battle-primary" data-action="start-cpu" ${disabled(model.party.length !== 3 || model.busy)}>このデッキで挑む <span>→</span></button><button class="battle-secondary quick-start" data-action="quick-cpu" ${disabled(model.busy)}>写真なしで今すぐ試す</button><details class="test-settings"><summary>テスト設定 <span>＋</span></summary><label for="battle-seed">乱数シード（空欄ならランダム）</label><input id="battle-seed" inputmode="numeric" maxlength="10" placeholder="例：12345" value="${esc(model.seedInput)}"><p>同じ編成・行動・シードで展開を再現。</p></details>`
-      : `<p class="mini-label">FRIEND DUEL</p><h3>友達と、真剣勝負。</h3><p class="share-notice">入室すると、写真・能力・技を相手に共有します。一般公開はせず、ルーム終了後に破棄します。</p><button class="battle-primary" data-action="create-room" ${disabled(model.party.length !== 3 || model.busy || model.netBusy)}>部屋をつくる <span>＋</span></button><div class="join-room"><label for="room-code-input">友達の合言葉</label><div><input id="room-code-input" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="6" value="${esc(model.roomInput)}" placeholder="ABC234"><button class="battle-secondary" data-action="join-room" ${disabled(model.party.length !== 3 || model.busy || model.netBusy)}>入室 →</button></div></div><p class="battle-muted">選択120秒 / 切断時は90秒まで復帰可能</p>`
+      : STATIC_HOSTING
+        ? `<p class="mini-label">GITHUB PAGES / SOLO EDITION</p><h3>この公開版はCPU対戦用です。</h3><p class="share-notice">${ONLINE_UNAVAILABLE}</p><button class="battle-primary" data-action="mode" data-mode="cpu">CPU対戦へ →</button>`
+        : `<p class="mini-label">FRIEND DUEL</p><h3>友達と、真剣勝負。</h3><p class="share-notice">入室すると、写真・能力・技を相手に共有します。一般公開はせず、ルーム終了後に破棄します。</p><button class="battle-primary" data-action="create-room" ${disabled(model.party.length !== 3 || model.busy || model.netBusy)}>部屋をつくる <span>＋</span></button><div class="join-room"><label for="room-code-input">友達の合言葉</label><div><input id="room-code-input" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="6" value="${esc(model.roomInput)}" placeholder="ABC234"><button class="battle-secondary" data-action="join-room" ${disabled(model.party.length !== 3 || model.busy || model.netBusy)}>入室 →</button></div></div><p class="battle-muted">選択120秒 / 切断時は90秒まで復帰可能</p>`
   }</aside></div><div class="lobby-bottom"><span>3 CARDS <i>×</i> 4 SKILLS <i>×</i> YOUR STRATEGY</span><button class="text-button" data-action="rules">ルールと属性相性 ↗</button></div>`;
 }
 function miniRoster(model, side) {
@@ -82,8 +89,11 @@ function fighterHTML(model, side, own) {
     card = f.card,
     attr = ATTRIBUTES[card.character.attribute],
     event = model.effect;
-  const effectClass = event?.side === side ? ` effect-${event.kind}` : "";
-  return `<article class="fighter ${own ? "own" : "opponent"} ${f.hp === 0 ? "fainted" : ""}${effectClass}" data-side="${side}" style="--attribute:${attr.color}"><div class="duel-card finish-${esc(card.finish?.id || "normal")}" aria-label="${esc(card.name)}の対戦カード"><div class="arcade-corner" aria-hidden="true"></div><div class="duel-card-heading"><h3>${esc(card.name)}</h3></div><span class="arcade-crest" aria-label="${attr.label}属性">${attr.label}</span><div class="fighter-image"><img src="${esc(card.image)}" alt="${esc(card.name)}"></div></div><div class="fighter-hud"><div class="fighter-top"><span>${own ? "YOU" : model.mode === "cpu" ? "CPU" : "FRIEND"}</span>${miniRoster(model, side)}</div><strong class="fighter-hud-name">${esc(card.name)}</strong><div class="fighter-hp"><b>${f.hp}</b><span>/ ${card.character.stats.hp} HP</span>${f.status ? `<span class="status-pill">${STATUS_LABELS[f.status]}</span>` : ""}</div><div class="hp-track"><div class="hp-fill ${percent(f) < 25 ? "danger" : percent(f) < 50 ? "warning" : ""}" style="width:${percent(f)}%"></div></div></div>${event?.kind === "damage" && event.side === side ? `<span class="damage-popup">−${event.amount}${event.totalHits ? `<small>${event.hit} / ${event.totalHits} HIT</small>` : ""}</span>` : ""}${event?.kind === "heal" && event.side === side ? `<span class="damage-popup heal-popup">＋${event.amount}</span>` : ""}</article>`;
+  const effectClass =
+    effects.motion && !model.fast && event?.side === side
+      ? ` effect-${event.kind}`
+      : "";
+  return `<article class="fighter ${own ? "own" : "opponent"} ${f.hp === 0 ? "fainted" : ""}${effectClass}${model.playback?.actor === side ? " is-acting" : ""}" data-side="${side}" style="--attribute:${attr.color}"><div class="duel-card finish-${esc(card.finish?.id || "normal")}" aria-label="${esc(card.name)}の対戦カード"><div class="arcade-corner" aria-hidden="true"></div><div class="duel-card-heading"><h3>${esc(card.name)}</h3></div><span class="arcade-crest" aria-label="${attr.label}属性">${attr.label}</span><div class="fighter-image"><img src="${esc(card.image)}" alt="${esc(card.name)}"></div></div><div class="fighter-hud"><div class="fighter-top"><span>${own ? "YOU" : model.mode === "cpu" ? "CPU" : "FRIEND"}</span>${miniRoster(model, side)}</div><strong class="fighter-hud-name">${esc(card.name)}</strong><div class="fighter-hp"><b>${f.hp}</b><span>/ ${card.character.stats.hp} HP</span>${f.status ? `<span class="status-pill">${STATUS_LABELS[f.status]}</span>` : ""}</div><div class="hp-track"><div class="hp-fill ${percent(f) < 25 ? "danger" : percent(f) < 50 ? "warning" : ""}" style="width:${percent(f)}%"></div></div></div>${event?.kind === "damage" && event.side === side ? `<span class="damage-popup">−${event.amount}${event.totalHits ? `<small>${event.hit} / ${event.totalHits} HIT</small>` : ""}</span>` : ""}${event?.kind === "heal" && event.side === side ? `<span class="damage-popup heal-popup">＋${event.amount}</span>` : ""}</article>`;
 }
 function benchHTML(model) {
   const state = stateFor(model),
@@ -92,7 +102,7 @@ function benchHTML(model) {
 }
 function effectHTML(model) {
   const event = model.effect;
-  if (!event) return "";
+  if (!event || !effects.motion || model.fast) return "";
   const state = stateFor(model),
     own = event.side === model.side;
   const card = activeFighter(state, event.side ?? 0).card;
@@ -137,13 +147,13 @@ export function renderBattle(model) {
     target = activeFighter(state, 1 - me),
     finished = state.phase === "finished";
   const switching = state.phase === "replace" || model.command === "switch";
-  const actingSide = model.effect?.attackerSide ?? model.effect?.side;
+  const actingSide = model.playback?.actor;
   const mine = actingSide === me;
   const committed = model.mode === "online" && model.room?.ready?.[me];
   let prompt = finished
     ? "デュエル終了"
     : model.animating
-      ? "素早い順に、1体ずつ行動しています。"
+      ? "決定した行動を、1体ずつ順に再生しています。"
       : state.phase === "replace"
         ? own.hp === 0 && !committed
           ? "次に出すカードを選んでください。"
@@ -164,9 +174,11 @@ export function renderBattle(model) {
   const turnTitle = finished
     ? "DUEL COMPLETE"
     : model.animating
-      ? mine
-        ? "YOUR ATTACK"
-        : "ENEMY ATTACK"
+      ? model.playback?.phase === "handoff"
+        ? "次の行動へ"
+        : model.playback?.phase === "status"
+          ? "ターン終了時の効果"
+          : `${model.playback?.index === 1 ? "先攻" : "後攻"}：${mine ? "あなた" : "相手"}`
       : committed
         ? "LOCKED IN"
         : state.phase === "replace"
@@ -175,13 +187,22 @@ export function renderBattle(model) {
   const turnText = finished
     ? "対戦終了"
     : model.animating
-      ? "行動を再生中"
+      ? model.playback?.phase === "handoff"
+        ? "先の行動が完了"
+        : model.playback?.phase === "status"
+          ? "状態異常の処理"
+          : esc(model.playback?.name || "行動を再生中")
       : committed
         ? "相手の決定待ち"
         : state.phase === "replace"
           ? "カードを補充"
           : "両者が選択 → 素早さ順";
-  const nextText = "";
+  const nextText =
+    model.animating && model.playback?.order.length
+      ? model.playback.order
+          .map((side, i) => `${i + 1} ${side === me ? "あなた" : "相手"}`)
+          .join(" → ")
+      : "";
   const result =
     state.winner === "draw"
       ? "DRAW"
@@ -202,7 +223,7 @@ export function renderBattle(model) {
     disconnect: "切断による決着",
     left: "退室による決着",
   };
-  return `<header class="battle-topline"><span class="match-badge">${model.mode === "cpu" ? `CPU <i>/ ${difficultyNames[model.difficulty]}</i>` : `ROOM <i>${esc(model.room?.code || "—")}</i>`}</span><span class="turn-indicator">TURN <b>${state.turn}</b><small>/ 60</small></span><div class="battle-top-tools"><span id="battle-clock" class="battle-clock">${model.mode === "cpu" ? `SEED ${model.seed}` : ""}</span><button data-action="rules" aria-label="ルールと属性相性">?</button><button data-action="options" aria-label="対戦メニュー">☰</button></div></header><div class="arena-stage ${model.animating ? "is-resolving" : ""}" data-actor="${model.animating ? (mine ? "own" : "opponent") : "both"}" data-sequence="${state.sequence}" data-effect="${esc(model.effect?.kind || "none")}" style="--effect-color:${ATTRIBUTES[model.effect?.attribute]?.color || "#ee354c"}"><div class="turn-ribbon ${mine ? "your-turn" : "enemy-turn"}" role="status"><b>${turnTitle}</b><span>${turnText}</span><small>${finished ? "" : nextText}</small></div><div class="field-geometry" aria-hidden="true"><div class="field-ring"></div><div class="field-diamond"></div><span>RE:FRAME<small>DUEL FIELD</small></span></div><span class="field-corner corner-one"></span><span class="field-corner corner-two"></span>${fighterHTML(model, 1 - me, false)}${fighterHTML(model, me, true)}${effectHTML(model)}<div class="field-divider"><span>OPPONENT</span><i></i><span>YOUR FIELD</span></div></div><section class="battle-message" aria-live="polite" aria-atomic="true"><span class="message-diamond">◆</span><div><small>${model.animating ? "ACTION" : "BATTLE LOG"}</small><p id="latest-event">${esc(model.latest || "デュエル開始。あなたの一手で、運命を変えろ。")}</p></div><button data-action="history">履歴 <span>↗</span></button></section><section class="command-panel"><div class="command-toolbar"><div role="group" aria-label="行動の種類"><button class="${!switching ? "active" : ""}" data-action="command" data-command="moves" ${disabled(state.phase === "replace" || finished)} aria-pressed="${!switching}">技を選ぶ <span>04</span></button><button class="${switching ? "active" : ""}" data-action="command" data-command="switch" ${disabled(finished)} aria-pressed="${switching}">交代 <span>03</span></button></div><button class="text-button" data-action="moves">技の詳細 ↗</button></div>${!finished ? (switching ? benchHTML(model) : `<div class="move-buttons">${own.card.character.moves.map((move, index) => `<button class="battle-move ${move.rarity === "rare" ? "rare-skill" : ""}" data-action="move" data-index="${index}" ${disabled(!canChoose(model) || own.pp[index] === 0)} aria-label="${move.rarity === "rare" ? "レア技、" : ""}${esc(move.name)}、威力 ${move.power ?? "—"}${move.hits ? `×${move.hits}` : ""}、PP ${own.pp[index]}、${esc(movesDescription(move))}"><span class="move-index">${String(index + 1).padStart(2, "0")}</span><div><div class="move-button-heading">${move.rarity === "rare" ? '<span class="rare-badge">レア</span>' : ""}<b>${esc(move.name)}</b></div><div class="move-button-numbers"><span class="move-base-power"><small>威力</small> ${move.power ?? "—"}${move.hits ? `×${move.hits}` : ""}</span><span class="move-current-pp">PP ${own.pp[index]}/${move.pp}</span></div><div class="move-button-meta"><span>${move.attribute ? ATTRIBUTES[move.attribute].label + " / " : ""}${move.category} · <strong class="move-effect-tags">${moveTags(move).join(" / ")}</strong></span></div></div></button>`).join("")}</div>${own.pp.every((p) => p === 0) ? `<button class="struggle-button battle-primary" data-action="struggle" ${disabled(!canChoose(model))}>最後の一撃（威力45・反動あり）</button>` : ""}`) : '<div class="end-command"><span>DUEL COMPLETE</span><p>新しい写真、新しい戦略。次のデュエルへ。</p></div>'}<div class="command-bottom"><p class="battle-prompt" aria-live="polite">${esc(prompt)}</p><div>${!finished && model.mode === "cpu" ? `<button class="auto-button ${model.auto ? "enabled" : ""}" data-action="auto">${model.auto ? "■ おまかせ停止" : "▷ おまかせ"}</button><label class="fast-toggle"><input id="fast-battle" type="checkbox" ${model.fast ? "checked" : ""}>高速</label>` : ""}${model.animating ? '<button class="skip-button" data-action="skip-animation">演出スキップ ≫</button>' : ""}</div></div></section>${finished ? `<section class="result-banner ${state.winner === me ? "won" : ""}" role="status"><span class="result-ornament">◇</span><p>${result}</p><h2>${resultText}</h2><span>${reasons[state.reason] || "デュエル終了"} · ${state.turn}ターン</span><div class="result-lineup" aria-label="あなたのデッキと決着時の先発">${state.teams[me].map((f, i) => `<img src="${esc(f.card.image)}" alt="${esc(f.card.name)}${i === state.active[me] ? "（決着時の先発）" : ""}" class="${i === state.active[me] ? "is-active" : ""}">`).join("")}</div><div class="result-actions">${model.mode === "cpu" ? '<button class="battle-primary" data-action="rematch">同じ条件でもう一度 →</button>' : ""}<button class="battle-secondary" data-action="back-lobby">編成に戻る</button><button class="text-button" data-action="download-log">戦闘ログを保存 ↓</button></div></section>` : ""}`;
+  return `<header class="battle-topline"><span class="match-badge">${model.mode === "cpu" ? `CPU <i>/ ${difficultyNames[model.difficulty]}</i>` : `ROOM <i>${esc(model.room?.code || "—")}</i>`}</span><span class="turn-indicator">TURN <b>${state.turn}</b><small>/ 60</small></span><div class="battle-top-tools"><span id="battle-clock" class="battle-clock">${model.mode === "cpu" ? `SEED ${model.seed}` : ""}</span><button data-action="rules" aria-label="ルールと属性相性">?</button><button data-action="options" aria-label="対戦メニュー">☰</button></div></header><div class="arena-stage ${model.animating ? "is-resolving" : ""}" data-actor="${model.animating && actingSide != null ? (mine ? "own" : "opponent") : "both"}" data-action-number="${model.playback?.index || 0}" data-phase="${model.playback?.phase || "select"}" data-motion="${effects.motion && !model.fast}" data-sequence="${state.sequence}" data-effect="${esc(model.effect?.kind || "none")}" style="--effect-color:${ATTRIBUTES[model.effect?.attribute]?.color || "#ee354c"}"><div class="turn-ribbon ${mine ? "your-turn" : "enemy-turn"}" role="status"><b>${turnTitle}</b><span>${turnText}</span><small>${finished ? "" : nextText}</small></div><div class="field-geometry" aria-hidden="true"><div class="field-ring"></div><div class="field-diamond"></div><span>RE:FRAME<small>DUEL FIELD</small></span></div><span class="field-corner corner-one"></span><span class="field-corner corner-two"></span>${fighterHTML(model, 1 - me, false)}${fighterHTML(model, me, true)}${effectHTML(model)}<div class="field-divider"><span>OPPONENT</span><i></i><span>YOUR FIELD</span></div></div><section class="battle-message" aria-live="polite" aria-atomic="true"><span class="message-diamond">◆</span><div><small>${model.animating ? "ACTION" : "BATTLE LOG"}</small><p id="latest-event">${esc(model.latest || "デュエル開始。あなたの一手で、運命を変えろ。")}</p></div><button data-action="history">履歴 <span>↗</span></button></section><section class="command-panel"><div class="command-toolbar"><div role="group" aria-label="行動の種類"><button class="${!switching ? "active" : ""}" data-action="command" data-command="moves" ${disabled(state.phase === "replace" || finished)} aria-pressed="${!switching}">技を選ぶ <span>04</span></button><button class="${switching ? "active" : ""}" data-action="command" data-command="switch" ${disabled(finished)} aria-pressed="${switching}">交代 <span>03</span></button></div><button class="text-button" data-action="moves">技の詳細 ↗</button></div>${!finished ? (switching ? benchHTML(model) : `<div class="move-buttons">${own.card.character.moves.map((move, index) => `<button class="battle-move ${move.rarity === "rare" ? "rare-skill" : ""}" data-action="move" data-index="${index}" ${disabled(!canChoose(model) || own.pp[index] === 0)} aria-label="${move.rarity === "rare" ? "レア技、" : ""}${esc(move.name)}、威力 ${move.power ?? "—"}${move.hits ? `×${move.hits}` : ""}、PP ${own.pp[index]}、${esc(movesDescription(move))}"><span class="move-index">${String(index + 1).padStart(2, "0")}</span><div><div class="move-button-heading">${move.rarity === "rare" ? '<span class="rare-badge">レア</span>' : ""}<b>${esc(move.name)}</b></div><div class="move-button-numbers"><span class="move-base-power"><small>威力</small> ${move.power ?? "—"}${move.hits ? `×${move.hits}` : ""}</span><span class="move-current-pp">PP ${own.pp[index]}/${move.pp}</span></div><div class="move-button-meta"><span>${move.attribute ? ATTRIBUTES[move.attribute].label + " / " : ""}${move.category} · 命中${move.accuracy}%</span></div><p class="move-explanation">${esc(move.rules === 2 ? moveSummary(move, move.healScale ? Math.max(0, Math.floor(recoveryAmount(own) * move.healScale)) : null) : movesDescription(move))}</p></div></button>`).join("")}</div>${own.pp.every((p) => p === 0) ? `<button class="struggle-button battle-primary" data-action="struggle" ${disabled(!canChoose(model))}>最後の一撃（威力45・反動あり）</button>` : ""}`) : '<div class="end-command"><span>DUEL COMPLETE</span><p>新しい写真、新しい戦略。次のデュエルへ。</p></div>'}<div class="command-bottom"><p class="battle-prompt" aria-live="polite">${esc(prompt)}</p><div>${!finished && model.mode === "cpu" ? `<button class="auto-button ${model.auto ? "enabled" : ""}" data-action="auto">${model.auto ? "■ おまかせ停止" : "▷ おまかせ"}</button><label class="fast-toggle"><input id="fast-battle" type="checkbox" ${model.fast ? "checked" : ""}>テンポ速め</label>` : ""}${model.animating ? '<button class="skip-button" data-action="skip-animation">演出スキップ ≫</button>' : ""}</div></div></section>${finished ? `<section class="result-banner ${state.winner === me ? "won" : ""}" role="status"><span class="result-ornament">◇</span><p>${result}</p><h2>${resultText}</h2><span>${reasons[state.reason] || "デュエル終了"} · ${state.turn}ターン</span><div class="result-lineup" aria-label="あなたのデッキと決着時の先発">${state.teams[me].map((f, i) => `<img src="${esc(f.card.image)}" alt="${esc(f.card.name)}${i === state.active[me] ? "（決着時の先発）" : ""}" class="${i === state.active[me] ? "is-active" : ""}">`).join("")}</div><div class="result-actions">${model.mode === "cpu" ? '<button class="battle-primary" data-action="rematch">同じ条件でもう一度 →</button>' : ""}<button class="battle-secondary" data-action="back-lobby">編成に戻る</button><button class="text-button" data-action="download-log">戦闘ログを保存 ↓</button></div></section>` : ""}`;
 }
 export function rulesHTML() {
   const keys = Object.keys(ATTRIBUTES);

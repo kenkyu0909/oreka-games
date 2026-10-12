@@ -496,6 +496,7 @@ function endStatuses(state) {
       record(
         state,
         `${fighter.card.name} は ${STATUS_LABELS[fighter.status]} のダメージ。`,
+        { cause: "status" },
       );
       damage(
         state,
@@ -507,13 +508,14 @@ function endStatuses(state) {
               (fighter.status === "poison" ? 10 : 16),
           ),
         ),
+        { cause: "status" },
       );
     }
     if (--fighter.statusTurns <= 0) {
       record(
         state,
         `${fighter.card.name} の ${STATUS_LABELS[fighter.status]} が治った。`,
-        { kind: "cleanse", side, index: state.active[side] },
+        { kind: "cleanse", side, index: state.active[side], cause: "status" },
       );
       fighter.status = null;
     }
