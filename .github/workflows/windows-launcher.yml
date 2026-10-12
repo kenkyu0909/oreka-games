@@ -1,0 +1,33 @@
+name: Windows launcher
+on:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "start-game.bat"
+      - ".gitattributes"
+      - "scripts/launch*.mjs"
+      - "tests/launcher*"
+      - "package*.json"
+      - "server/**"
+      - ".github/workflows/windows-launcher.yml"
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: "launcher test & 日本語!"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: "launcher test & 日本語!"
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test tests/launcher.test.js
+      - run: node tests/launcher-smoke.mjs
