@@ -43,7 +43,9 @@ export function createGameServer({
   now = Date.now,
   maxRooms = 100,
   maintenanceInterval = 1000,
+  publicUrl = process.env.PUBLIC_URL || null,
 } = {}) {
+  let sharedPublicUrl = normalizePublicUrl(publicUrl);
   const rooms = new Map();
   const send = (ws, value) => {
     if (ws?.readyState === WebSocket.OPEN) {
@@ -73,7 +75,20 @@ export function createGameServer({
     }
     if (pathname === "/health") {
       res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ ok: true, protocol: PROTOCOL_VERSION }));
+      res.end(
+        JSON.stringify({
+          ok: true,
+          protocol: PROTOCOL_VERSION,
+          publicUrl: sharedPublicUrl,
+        }),
+      );
+      return;
+    }
+    // 別回線スマホ用の公開URLをフロントへ知らせる。写真・部屋情報は含めない。
+    if (pathname === "/public-url") {
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Cache-Control", "no-cache");
+      res.end(JSON.stringify({ publicUrl: sharedPublicUrl }));
       return;
     }
     const relative = pathname === "/" ? "index.html" : pathname.slice(1);
@@ -110,10 +125,33 @@ export function createGameServer({
   server.on("upgrade", (req, socket, head) => {
     let allowed = false;
     try {
-      const host = new URL(`http://${req.headers.host}`).hostname;
-      allowed =
-        new URL(req.url, "http://local").pathname === "/socket" &&
-        (!req.headers.origin || new URL(req.headers.origin).hostname === host);
+      const host = new URL(`http://${req.headers.host}`).hostname.toLowerCase();
+      const pathOk =
+        new URL(req.url, "http://local").pathname === "/socket";
+      let originOk = !req.headers.origin;
+      let publicHost = null;
+      try {
+        publicHost = sharedPublicUrl
+          ? new URL(sharedPublicUrl).hostname.toLowerCase()
+          : null;
+      } catch {
+        publicHost = null;
+      }
+      if (req.headers.origin) {
+        const origin = new URL(req.headers.origin);
+        const originHost = origin.hostname.toLowerCase();
+        const requestHost = new URL(`http://${req.headers.host}`);
+        // 明示ポートが食い違う別ポートからの接続は拒否する。
+        const portMismatch =
+          origin.port && requestHost.port && origin.port !== requestHost.port;
+        // 同一ホストが基本。公開トンネル経由でHostが書き換わる
+        // リバースプロキシに備え、公開URLのホストからのOriginも許可する。
+        originOk =
+          !portMismatch &&
+          (originHost === host ||
+            (publicHost != null && originHost === publicHost));
+      }
+      allowed = pathOk && originOk;
     } catch {
       /* invalid host/origin */
     }
@@ -130,22 +168,35 @@ export function createGameServer({
     room.players.map(
       (p) => !!p.socket && p.socket.readyState === WebSocket.OPEN,
     );
+  // 写真は戦闘状態から切り離し、接続ごとに一度だけ `photos` として送る。
+  // 2通目以降はクライアントが指紋で復元するため、ターンごとの再送がなくなる。
   function broadcast(room) {
-    room.players.forEach((player, side) =>
-      send(player.socket, {
+    room.players.forEach((player, side) => {
+      const socket = player.socket;
+      const battle = room.battle ? publicState(room.battle) : null;
+      if (battle)
+        for (const team of battle.teams)
+          for (const fighter of team) fighter.card.image = "";
+      let photos = null;
+      if (battle && socket && !socket.photosSent) {
+        socket.photosSent = true;
+        photos = room.players.map((p) => p.team.map((c) => c.image));
+      }
+      send(socket, {
         type: "state",
         serverTime: now(),
         code: room.code,
         side,
-        battle: room.battle ? publicState(room.battle) : null,
+        battle,
+        photos,
         ready: room.pending.map(Boolean),
         connected: connected(room),
         deadline: room.deadline,
         reconnectUntil: room.players.map((p) =>
           p.disconnectedAt == null ? null : p.disconnectedAt + RECONNECT_GRACE,
         ),
-      }),
-    );
+      });
+    });
   }
   function refreshDeadline(room) {
     room.pending = [null, null];
@@ -154,6 +205,9 @@ export function createGameServer({
         if (activeFighter(room.battle, side).hp > 0)
           room.pending[side] = { type: "wait" };
     }
+    room.pausedAt = null;
+    room.pausedDeadline = null;
+    room.pausedBudget = RECONNECT_GRACE;
     room.deadline =
       room.battle &&
       room.battle.phase !== "finished" &&
@@ -162,6 +216,25 @@ export function createGameServer({
         : null;
     if (room.battle?.phase === "finished" && room.finishedAt == null)
       room.finishedAt = now();
+  }
+  // 切断中はターンの時計を止めるが、延長できる猶予は1ターンにつき
+  // RECONNECT_GRACE までに限る。復帰のたびに満額へ戻すことはしない。
+  function pauseDeadline(room) {
+    if (room.deadline == null || room.pausedAt != null) return;
+    if (room.pausedBudget <= 0) return;
+    room.pausedAt = now();
+    room.pausedDeadline = room.deadline;
+    room.deadline = null;
+  }
+  function resumeDeadline(room) {
+    if (room.pausedAt == null) return;
+    if (room.battle?.phase === "finished") return;
+    if (!connected(room).every(Boolean)) return;
+    const credited = Math.min(now() - room.pausedAt, room.pausedBudget);
+    room.pausedBudget -= credited;
+    room.deadline = room.pausedDeadline + credited;
+    room.pausedAt = null;
+    room.pausedDeadline = null;
   }
   function finishRoom(room, winner, reason) {
     if (room.battle && room.battle.phase !== "finished") {
@@ -204,8 +277,11 @@ export function createGameServer({
       room.battle &&
       room.battle.phase !== "finished" &&
       connected(room).every(Boolean)
-    )
-      room.deadline = now() + ACTION_TIMEOUT;
+    ) {
+      // 復帰なら停止していた残り時間から、新規なら満額から再開する。
+      if (room.pausedAt != null) resumeDeadline(room);
+      else if (room.deadline == null) room.deadline = now() + ACTION_TIMEOUT;
+    }
     send(ws, { type: "session", code: room.code, token: player.token, side });
   }
   wss.on("connection", (ws, req) => {
@@ -265,6 +341,9 @@ export function createGameServer({
             pending: [null, null],
             battle: null,
             deadline: null,
+            pausedAt: null,
+            pausedDeadline: null,
+            pausedBudget: RECONNECT_GRACE,
           };
           rooms.set(code, room);
           attach(ws, room, 0);
@@ -385,7 +464,7 @@ export function createGameServer({
       if (player) {
         player.socket = null;
         player.disconnectedAt = now();
-        room.deadline = null;
+        pauseDeadline(room);
         broadcast(room);
       }
     });
@@ -458,7 +537,35 @@ export function createGameServer({
     await new Promise((resolve) => wss.close(resolve));
     await new Promise((resolve) => server.close(resolve));
   }
-  return { server, wss, rooms, maintain, close };
+  return {
+    server,
+    wss,
+    rooms,
+    maintain,
+    close,
+    getPublicUrl: () => sharedPublicUrl,
+    setPublicUrl: (value) => {
+      sharedPublicUrl = normalizePublicUrl(value);
+    },
+  };
+}
+
+function normalizePublicUrl(value) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== "https:") return null;
+    const host = url.hostname.toLowerCase();
+    const loopback =
+      host === "localhost" ||
+      host.endsWith(".localhost") ||
+      host === "0.0.0.0" ||
+      host.startsWith("127.");
+    if (loopback) return null;
+    return `${url.origin}/`;
+  } catch {
+    return null;
+  }
 }
 
 if (

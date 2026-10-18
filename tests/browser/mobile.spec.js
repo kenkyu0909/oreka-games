@@ -53,7 +53,7 @@ test("HTTPS preview QR really decodes to the public entry URL; copy/share keep p
   await expect(page.locator("#mobile-guide")).toBeVisible();
   expect(await scanQr(page)).toBe(`${origin}/`);
   await expect(page.locator("#mobile-preview-notice")).toContainText(
-    "常設公開ではありません",
+    "起動中だけ使える公開URL",
   );
   await page.locator("#mobile-copy").click();
   await expect(page.locator("#mobile-link-status")).toContainText(

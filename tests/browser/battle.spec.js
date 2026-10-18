@@ -187,6 +187,17 @@ test("online waits for both choices, preserves a commitment on reload and synchr
     await c2.close();
   }
 });
+// 先制技は素早さに関係なく先に動く。速度順の再生を確かめるテストでは、
+// 両者に先制でない技を選ばせて順序を決定的にする。
+async function nonPriorityIndex(page) {
+  const moves = page.locator(".battle-move");
+  const count = await moves.count();
+  for (let i = 0; i < count; i += 1) {
+    const label = (await moves.nth(i).getAttribute("aria-label")) || "";
+    if (!label.includes("先制")) return i;
+  }
+  return 0;
+}
 test("online replays attacks in speed order, accepts next-turn readiness without restarting animation", async ({
   browser,
 }) => {
@@ -204,8 +215,8 @@ test("online replays attacks in speed order, accepts next-turn readiness without
         last = key;
       }).observe(document.querySelector("#battle-app"), { childList: true });
     });
-    await p1.locator(".battle-move").first().click();
-    await p2.locator(".battle-move").first().click();
+    await p1.locator(".battle-move").nth(await nonPriorityIndex(p1)).click();
+    await p2.locator(".battle-move").nth(await nonPriorityIndex(p2)).click();
     await expect(p1.locator(".turn-indicator b")).toHaveText("2");
     await expect(p2.locator(".is-resolving")).toBeVisible();
     await p1.locator(".battle-move").first().click();

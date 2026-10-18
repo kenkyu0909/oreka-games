@@ -6,7 +6,7 @@ pushd "%~dp0"
 if errorlevel 1 goto folder_error
 where node.exe >nul 2>nul
 if errorlevel 1 goto missing_node
-node scripts\launch-game.mjs
+node scripts\launch-game.mjs %*
 set "RESULT=%ERRORLEVEL%"
 if not "%RESULT%"=="0" (
   echo.

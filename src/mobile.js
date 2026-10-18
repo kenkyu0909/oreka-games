@@ -1,6 +1,20 @@
 import "./mobile.css";
 import { STATIC_HOSTING, ONLINE_UNAVAILABLE } from "./hosting.js";
-import { mobileLinkInfo } from "./mobile-link.js";
+import { mobileLinkInfo, resolveShareTarget } from "./mobile-link.js";
+
+async function fetchPublicUrl() {
+  try {
+    const response = await fetch(new URL("public-url", location.href), {
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    const value = data?.publicUrl ?? data?.url;
+    return typeof value === "string" && value ? value : null;
+  } catch {
+    return null;
+  }
+}
 
 export function initMobileGuide() {
   const $ = (id) => document.getElementById(id);
@@ -35,13 +49,28 @@ export function initMobileGuide() {
     dialog.showModal();
     $("mobile-guide-close").focus();
     try {
-      link = mobileLinkInfo(location.href, import.meta.env.BASE_URL);
+      const base = import.meta.env.BASE_URL;
+      link = mobileLinkInfo(location.href, base);
+      let viaPublic = false;
+      if (!link.shareable && !STATIC_HOSTING) {
+        // ローカル起動中でも公開トンネルがあれば別回線用QRを出す
+        message("公開URLを確認しています…");
+        const target = resolveShareTarget(
+          location.href,
+          base,
+          await fetchPublicUrl(),
+        );
+        if (target.shareable) {
+          link = target;
+          viaPublic = !!target.viaPublic;
+        }
+      }
       input.value = link.url;
       if (!link.shareable) {
         message(
           link.reason === "local"
-            ? "このURLはこのPC専用です。Arenaのライブプレビューを新しいタブで開いてから、もう一度「スマホで遊ぶ」を押してください。localhostはスマホでは使えません。"
-            : "写真の解析にはHTTPSが必要です。HTTPのLANアドレスではなく、ArenaのHTTPSライブプレビューを開いてください。",
+            ? "このURLはこのPC専用です。別回線のスマホと遊ぶには start-public-battle.bat（または --public）で起動し直してから、もう一度「スマホで遊ぶ」を押してください。localhostはスマホでは使えません。"
+            : "写真の解析にはHTTPSが必要です。公開URLで起動し直すか、HTTPSのURLから開いてください。",
         );
         return;
       }
@@ -58,7 +87,11 @@ export function initMobileGuide() {
       });
       if (epoch !== generation || !dialog.open) return;
       canvas.hidden = false;
-      message("スマホのカメラで読み取り、Safari／Chromeで開いてください。");
+      message(
+        viaPublic
+          ? "別回線スマホ用の公開URLでQRを作成しました。サーバー起動中のみ有効です。Safari／Chromeで開いてください。"
+          : "スマホのカメラで読み取り、Safari／Chromeで開いてください。",
+      );
     } catch {
       if (epoch === generation && dialog.open)
         message(

@@ -20,6 +20,8 @@ function storeSession(value) {
     /* storage may be disabled */
   }
 }
+// サーバーの復帰猶予（90秒）に少し余裕を持たせ、時間で打ち切る。
+const RECONNECT_WINDOW = 95_000;
 export class RoomConnection {
   constructor(onMessage, onConnection) {
     this.onMessage = onMessage;
@@ -29,6 +31,7 @@ export class RoomConnection {
     this.stopped = false;
     this.retries = 0;
     this.timer = null;
+    this.reconnectUntil = 0;
   }
   open(message) {
     this.initial = message;
@@ -68,6 +71,7 @@ export class RoomConnection {
         this.session = { code: message.code, token: message.token };
         storeSession(this.session);
         this.retries = 0;
+        this.reconnectUntil = 0;
         this.onConnection(true, "接続しました。");
       }
       if (["expired", "left", "replaced"].includes(message.type)) {
@@ -86,7 +90,10 @@ export class RoomConnection {
     socket.addEventListener("close", () => {
       clearTimeout(openTimeout);
       if (this.stopped || this.socket !== socket) return;
-      if (this.session && this.retries < 20) {
+      const time = Date.now();
+      if (this.session && !this.reconnectUntil)
+        this.reconnectUntil = time + RECONNECT_WINDOW;
+      if (this.session && time < this.reconnectUntil) {
         this.retries++;
         this.onConnection(
           false,

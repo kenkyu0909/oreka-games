@@ -66,6 +66,8 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
     results: { wins: 0, losses: 0, draws: 0 },
     recorded: false,
     offset: 0,
+    // サーバーは写真を接続ごとに一度しか送らない。指紋で保持して再構成する。
+    photoCache: new Map(),
   };
   let stepTimer, autoTimer;
   let animationEpoch = 0;
@@ -586,6 +588,22 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
         model.side = data.side;
         model.offset = (data.serverTime || Date.now()) - Date.now();
         if (data.battle) {
+          // 初回だけ届く photos を指紋で貯め、以降は省略された画像を復元する。
+          if (Array.isArray(data.photos))
+            data.battle.teams.forEach((team, s) =>
+              team.forEach((fighter, i) => {
+                const image = data.photos[s]?.[i];
+                if (typeof image === "string") {
+                  fighter.card.image = image;
+                  model.photoCache.set(fighter.card.fingerprint, image);
+                }
+              }),
+            );
+          for (const team of data.battle.teams)
+            for (const fighter of team)
+              if (!fighter.card.image)
+                fighter.card.image =
+                  model.photoCache.get(fighter.card.fingerprint) || "";
           if (
             !model.animating ||
             model.battle?.sequence !== data.battle.sequence

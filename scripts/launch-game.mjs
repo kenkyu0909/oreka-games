@@ -15,6 +15,7 @@ import {
 const root = fileURLToPath(new URL("../", import.meta.url));
 const marker = path.join(root, "node_modules", ".reframe-install-key");
 let game;
+let publicTunnel = null;
 
 async function exists(file) {
   try {
@@ -90,7 +91,15 @@ function openBrowser(url) {
   child.unref();
 }
 async function main() {
-  console.log("\nRE:FRAME — ローカル起動\n");
+  const { wantsPublicTunnel, startPublicTunnel } = await import(
+    "./public-tunnel.mjs"
+  );
+  const publicMode = wantsPublicTunnel(process.argv, process.env);
+  console.log(
+    publicMode
+      ? "\nRE:FRAME — 公開対戦モード（別回線のスマホ対応）\n"
+      : "\nRE:FRAME — ローカル起動\n",
+  );
   if (!supportedNode(process.versions.node))
     throw new Error(
       `Node.js ${process.versions.node} は未対応です。Node.js 22.12以上（24 LTS推奨）をインストールしてください。https://nodejs.org/ja`,
@@ -135,14 +144,64 @@ async function main() {
     game.server.listen(port, "0.0.0.0", resolve);
   });
   const url = `http://localhost:${port}`;
-  console.log(
-    `\n起動しました！ ${url}\nこのウィンドウは開いたままにしてください。終了は Ctrl+C。\n※スマホ・別のPCから使う場合は、別途HTTPSの接続先が必要です。\n`,
-  );
+  let tunnel = null;
+  let publicUrl = process.env.PUBLIC_URL || null;
+  if (publicMode && !publicUrl) {
+    console.log(
+      "[公開] cloudflaredでHTTPS公開URLを発行しています（初回は取得に1分ほどかかる場合があります）…",
+    );
+    tunnel = startPublicTunnel(port);
+    const forwardErrors = (child) => {
+      child.once("error", (error) => {
+        const cmd = child.spawnfile || "";
+        if (
+          error?.code === "ENOENT" &&
+          String(cmd).toLowerCase().includes("cloudflared")
+        ) {
+          console.log(
+            "[公開] cloudflaredが見つからないため、npx経由で取得を試みます（初回はダウンロードで1〜2分かかります）…",
+          );
+        } else {
+          console.log(`[公開] トンネル起動の確認: ${error.message}`);
+        }
+      });
+    };
+    tunnel.onProcess(forwardErrors);
+    publicUrl = await tunnel.urlPromise;
+    if (publicUrl) {
+      game.setPublicUrl(publicUrl);
+      process.env.PUBLIC_URL = publicUrl;
+    } else {
+      console.log(
+        "[公開] 公開URLを取得できませんでした。ローカル起動として続けます。\n" +
+          "  ・インターネット接続を確認してください。\n" +
+          "  ・cloudflaredが必要です。https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/ から入手するか、npxが使える状態で再実行してください。",
+      );
+      await tunnel.stop().catch(() => {});
+      tunnel = null;
+    }
+  } else if (publicUrl) {
+    game.setPublicUrl(publicUrl);
+  }
+  publicTunnel = tunnel;
+  if (publicUrl) {
+    console.log(
+      `\n起動しました！\n・PC: ${url}\n・別回線スマホ用（HTTPS公開）: ${publicUrl}\n` +
+        `スマホのカメラでPC画面のQR（「スマホで遊ぶ」）を読み取ってください。QRにはこの公開URLが入ります。\n` +
+        `PCとスマホは同じ合言葉ルームに入れば対戦できます。双方とも公開URL側を開くのが確実です。\n` +
+        `このウィンドウは開いたままにしてください。終了は Ctrl+C。\n`,
+    );
+  } else {
+    console.log(
+      `\n起動しました！ ${url}\nこのウィンドウは開いたままにしてください。終了は Ctrl+C。\n※別回線のスマホと対戦する場合は start-public-battle.bat（または node scripts\\launch-game.mjs --public）で起動してください。\n`,
+    );
+  }
   let stopping = false;
   const stop = async () => {
     if (stopping) return;
     stopping = true;
     console.log("\nサーバーを停止しています…");
+    if (tunnel) await tunnel.stop().catch(() => {});
     await game.close();
     process.exit(0);
   };
@@ -160,6 +219,7 @@ main().catch(async (error) => {
       "\nポートまたはファイルへのアクセスが拒否されました。書き込み可能なフォルダへ配置し、READMEのトラブル対処を確認してください。",
     );
   } else console.error(`\n起動できませんでした：${error.message}`);
+  if (publicTunnel) await publicTunnel.stop().catch(() => {});
   if (game) await game.close().catch(() => {});
   process.exitCode = 1;
 });

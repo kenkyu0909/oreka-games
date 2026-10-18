@@ -217,6 +217,87 @@ test("disconnect pauses turn deadline then forfeits after 90 seconds", async (t)
   assert.equal(ended.battle.winner, 1);
   assert.equal(ended.battle.reason, "disconnect");
 });
+test("reconnect resumes the paused turn instead of restarting the deadline", async (t) => {
+  const env = await setup(t);
+  const { a, b, sessionA } = await pair(env);
+  const base = 100000 + ACTION_TIMEOUT;
+  const resumeWith = async (wait) => {
+    env.advance(wait);
+    const replacement = await client(env.url);
+    replacement.send({
+      type: "resume",
+      code: sessionA.code,
+      token: sessionA.token,
+    });
+    await replacement.next("session");
+    return { replacement, state: await replacement.next("state") };
+  };
+
+  // 半分まで進めて切断。時計は止まる。
+  env.advance(30000);
+  a.socket.close();
+  await once(a.socket, "close");
+  const paused = await b.next("state", (s) => !s.connected[0]);
+  assert.equal(paused.deadline, null);
+
+  // 20秒後に復帰。満額(120秒)には戻らず、停止した20秒ぶんだけ延びる。
+  let current = await resumeWith(20000);
+  assert.equal(current.state.deadline, base + 20000);
+
+  // 何度往復しても、1ターンに延長できるのは猶予(RECONNECT_GRACE)までに限る。
+  for (let i = 0; i < 3; i += 1) {
+    current.replacement.socket.close();
+    await once(current.replacement.socket, "close");
+    await b.next("state", (s) => !s.connected[0]);
+    current = await resumeWith(40000);
+    assert.ok(
+      current.state.deadline <= base + RECONNECT_GRACE,
+      `延長上限を超えた: ${current.state.deadline}`,
+    );
+  }
+  assert.equal(current.state.deadline, base + RECONNECT_GRACE);
+
+  // 延長を使い切れば、締切どおり時間切れで終わる。
+  env.advance(RECONNECT_GRACE + 1);
+  const ended = await b.next("state", (s) => s.battle.phase === "finished");
+  assert.equal(ended.battle.reason, "timeout");
+});
+test("photos are sent once per connection and restored from the fingerprint cache", async (t) => {
+  const env = await setup(t);
+  const { a, b, sa, sb, sessionA } = await pair(env);
+  const image = "data:image/png;base64,aGVsbG8=";
+  // 戦闘状態そのものは写真を含まず、両者で一致する。
+  assert.equal(sa.battle.teams[0][0].card.image, "");
+  assert.deepEqual(sa.battle, sb.battle);
+  // 最初の状態にだけ写真が添付される。
+  assert.deepEqual(sa.photos, [
+    [image, image, image],
+    [image, image, image],
+  ]);
+  a.send(choose());
+  b.send(choose());
+  const next = await a.next("state", (s) => s.battle.sequence === 1);
+  await b.next("state", (s) => s.battle.sequence === 1);
+  assert.equal(next.battle.teams[0][0].card.image, "");
+  assert.equal(next.photos, null);
+  // 復帰した接続には写真をもう一度送る。
+  a.socket.close();
+  await once(a.socket, "close");
+  await b.next("state", (s) => !s.connected[0]);
+  const replacement = await client(env.url);
+  replacement.send({
+    type: "resume",
+    code: sessionA.code,
+    token: sessionA.token,
+  });
+  await replacement.next("session");
+  const resumed = await replacement.next("state");
+  assert.equal(resumed.battle.teams[0][0].card.image, "");
+  assert.deepEqual(resumed.photos, [
+    [image, image, image],
+    [image, image, image],
+  ]);
+});
 test("lobby and finished room TTLs purge photo and session data", async (t) => {
   const env = await setup(t);
   const a = await client(env.url);
@@ -260,6 +341,11 @@ test("malformed JSON gets an error; nonmatching browser origins are rejected", a
     foreign.on("error", (error) => resolve(error.message));
   });
   assert.match(rejected, /403/);
+  const otherPort = new WebSocket(env.url, { origin: "http://127.0.0.1:1" });
+  const rejectedPort = await new Promise((resolve) => {
+    otherPort.on("error", (error) => resolve(error.message));
+  });
+  assert.match(rejectedPort, /403/);
   const health = await fetch(`${env.http}/health`);
   assert.equal(health.status, 200);
   assert.equal((await health.json()).ok, true);
