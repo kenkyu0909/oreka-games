@@ -1,8 +1,16 @@
 name: Publish smartphone game
+
+# 公開は手動実行のみ。既定は「非公開のお知らせ」を公開し、ゲームを公開したい
+# ときだけ mode=app を選んで実行します（誤って公開してしまうのを防ぐため）。
 on:
-  push:
-    branches: [main, "arena/cd2b3660-oreka-games"]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "公開する内容"
+        type: choice
+        options: [placeholder, app]
+        default: placeholder
+
 permissions:
   contents: read
   pages: read
@@ -21,11 +29,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run build:pages
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:pages
+      - if: inputs.mode == 'app'
+        run: npm ci
+      - if: inputs.mode == 'app'
+        run: npm test
+      - if: inputs.mode == 'app'
+        run: npm run build:pages
+      - if: inputs.mode == 'app'
+        run: npx playwright install --with-deps chromium
+      - if: inputs.mode == 'app'
+        run: npm run test:pages
+      - if: inputs.mode != 'app'
+        run: node scripts/build-pages-placeholder.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -40,6 +55,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Publish game
+      - name: Publish site
         id: deployment
         uses: actions/deploy-pages@v4
