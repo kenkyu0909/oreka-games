@@ -111,6 +111,106 @@ async function previewFromResult(result) {
   return { url, image };
 }
 
+// カード生成シーン。解析中は「鋳造→量子化→特徴抽出」を進め、
+// カードが届いたら「能力→技→輝き」を刻みながら部品を1つずつ組み上げる。
+// 演出オフ・端末の動きを減らす設定では何もしない（通常表示のまま）。
+let forgeTimers = [];
+let forgeRun = 0;
+function forgeClear() {
+  forgeTimers.forEach(clearTimeout);
+  forgeTimers = [];
+}
+function forgeSceneStep(name, state) {
+  const step = document.querySelector(`[data-forge-step="${name}"]`);
+  if (!step) return;
+  step.dataset.state = state;
+  step.querySelector("i").textContent =
+    state === "done" ? "完了" : state === "active" ? "生成中" : "待機";
+}
+function forgeMeter(percent) {
+  $("forge-meter-fill").style.width = `${percent}%`;
+}
+function forgeBegin() {
+  forgeClear();
+  const run = ++forgeRun;
+  const scene = $("forge-scene");
+  document.querySelectorAll("[data-forge-step]").forEach((step) => {
+    step.dataset.state = "idle";
+    step.querySelector("i").textContent = "待機";
+  });
+  forgeMeter(0);
+  $("card-shell").classList.remove("assembling");
+  if (!effects.motion) {
+    scene.hidden = true;
+    return run;
+  }
+  scene.hidden = false;
+  const at = (ms, action) =>
+    forgeTimers.push(
+      setTimeout(() => {
+        if (run === forgeRun) action();
+      }, ms),
+    );
+  forgeSceneStep("frame", "active");
+  at(180, () => {
+    forgeSceneStep("frame", "done");
+    forgeSceneStep("photo", "active");
+    forgeMeter(20);
+  });
+  at(620, () => {
+    forgeSceneStep("photo", "done");
+    forgeSceneStep("features", "active");
+    forgeMeter(44);
+  });
+  return run;
+}
+function forgeAssemble(run) {
+  if (run !== forgeRun) return;
+  if (!effects.motion) {
+    forgeCancel(run);
+    return;
+  }
+  forgeClear();
+  const scene = $("forge-scene");
+  // 解析が速い場合はタイマーより先にここへ来るため、前半の工程をまとめて完了にする。
+  ["frame", "photo", "features"].forEach((name) =>
+    forgeSceneStep(name, "done"),
+  );
+  forgeSceneStep("stats", "active");
+  forgeMeter(66);
+  $("card-shell").classList.add("assembling");
+  const at = (ms, action) =>
+    forgeTimers.push(
+      setTimeout(() => {
+        if (run === forgeRun) action();
+      }, ms),
+    );
+  at(300, () => {
+    forgeSceneStep("stats", "done");
+    forgeSceneStep("moves", "active");
+  });
+  at(580, () => {
+    forgeSceneStep("moves", "done");
+    forgeSceneStep("finish", "active");
+  });
+  at(860, () => {
+    forgeSceneStep("finish", "done");
+    forgeMeter(100);
+  });
+  at(1480, () => {
+    $("card-shell").classList.remove("assembling");
+    scene.hidden = true;
+    forgeMeter(0);
+  });
+}
+function forgeCancel(run) {
+  if (run !== undefined && run !== forgeRun) return;
+  forgeClear();
+  forgeRun += 1;
+  $("card-shell").classList.remove("assembling");
+  $("forge-scene").hidden = true;
+}
+
 async function loadPhoto(file, sampleName = null) {
   if (!file || processing || exporting) return;
   if (!globalThis.crypto?.subtle) {
@@ -131,6 +231,7 @@ async function loadPhoto(file, sampleName = null) {
   clearAwakening();
   setBusy(true);
   status("写真の色と形を解析しています。画像は外部に送信されません。");
+  const forge = forgeBegin();
   try {
     const result = await runAnalysis(await file.arrayBuffer());
     const { url, image } = await previewFromResult(result);
@@ -202,6 +303,7 @@ async function loadPhoto(file, sampleName = null) {
     $("stage-caption").textContent =
       `${finish.label} · 輝きは能力に影響しません`;
     renderDetails(current);
+    forgeAssemble(forge);
     document.dispatchEvent(new CustomEvent("oreka-card-ready"));
     const rare = character.moves.find((m) => m.rarity === "rare");
     status(
@@ -212,6 +314,7 @@ async function loadPhoto(file, sampleName = null) {
     );
     return true;
   } catch (error) {
+    forgeCancel(forge);
     status(
       error.message ||
         "画像を読み込めませんでした。別のJPEG・PNGをお試しください。",

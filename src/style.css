@@ -1482,6 +1482,185 @@ img {
     filter: brightness(1);
   }
 }
+/* 0.9.0 — カード生成シーン。外枠→写真→特徴→能力→技→輝きの順に組み上がる。 */
+.forge-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.forge-scene:before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 78px;
+  background: linear-gradient(#0c0910f2, #0c091000);
+  z-index: -1;
+}
+.forge-scene[hidden] {
+  display: none;
+}
+.forge-scan {
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  top: 0;
+  height: 16%;
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    #ffd98a30 42%,
+    #fff6d07a 50%,
+    #ffd98a30 58%,
+    transparent
+  );
+  mix-blend-mode: screen;
+  animation: forge-scan 1.05s ease-in-out infinite;
+}
+@keyframes forge-scan {
+  0% {
+    transform: translateY(-12%);
+    opacity: 0;
+  }
+  18%,
+  82% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(560%);
+    opacity: 0;
+  }
+}
+.forge-meter {
+  height: 3px;
+  margin: 0 6px;
+  background: #ffffff14;
+  overflow: hidden;
+}
+.forge-meter > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #ffcf7d, #ff7a59);
+  box-shadow: 0 0 10px #ffb35c88;
+  transition: width 0.35s ease;
+}
+.forge-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  justify-content: center;
+  list-style: none;
+  margin: 0 6px;
+  padding: 0;
+}
+.forge-steps li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: 8px/1.4 var(--display);
+  letter-spacing: 1px;
+  color: #8a6f80;
+  transition: color 0.2s;
+}
+.forge-steps b {
+  font-weight: 700;
+  color: #c69a52;
+}
+.forge-steps i {
+  font-style: normal;
+  font-size: 7px;
+  padding: 0 3px;
+  border: 1px solid #ffffff22;
+  border-radius: 2px;
+  color: #7d6473;
+}
+.forge-steps li[data-state="active"] {
+  color: #ffe1a6;
+  text-shadow: 0 0 8px #ffb35c88;
+}
+.forge-steps li[data-state="active"] i {
+  color: #2a1508;
+  background: #ffcf7d;
+  border-color: #ffe6b8;
+}
+.forge-steps li[data-state="done"] {
+  color: #a9d8c2;
+}
+.forge-steps li[data-state="done"] i {
+  color: #0e2018;
+  background: #8fd7b4;
+  border-color: #c6f2dd;
+}
+/* 部品が1つずつ嵌まる。animation-fill-modeはbackwardsのみで、終了後は通常表示へ戻る。 */
+.card-shell.assembling .game-card {
+  animation: forge-snap 0.42s cubic-bezier(0.2, 0.8, 0.3, 1.35) backwards;
+}
+.card-shell.assembling .game-card > * {
+  animation: forge-part 0.44s cubic-bezier(0.16, 0.9, 0.3, 1.35) backwards;
+}
+.card-shell.assembling .photo-frame {
+  animation-delay: 0.05s;
+}
+.card-shell.assembling .card-meta {
+  animation-delay: 0.16s;
+}
+.card-shell.assembling .card-heading {
+  animation-delay: 0.26s;
+}
+.card-shell.assembling .card-primary-stats {
+  animation-delay: 0.38s;
+}
+.card-shell.assembling .card-mini-moves {
+  animation-delay: 0.5s;
+}
+.card-shell.assembling .card-footer {
+  animation-delay: 0.62s;
+}
+@keyframes forge-snap {
+  from {
+    opacity: 0.2;
+    transform: translateY(12px) scale(0.93);
+    filter: brightness(2.2) saturate(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes forge-part {
+  from {
+    opacity: 0;
+    transform: translate(-16px, -10px) scale(0.84) rotate(-1.8deg);
+    filter: brightness(2.4) saturate(0.3);
+  }
+  55% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@media (max-width: 720px) {
+  .forge-steps {
+    gap: 2px 7px;
+  }
+  .forge-steps li {
+    font-size: 7px;
+  }
+  .forge-steps li > span {
+    display: none;
+  }
+}
 @media (min-width: 1600px) {
   .display-card {
     width: 300px;
