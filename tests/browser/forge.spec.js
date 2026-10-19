@@ -17,7 +17,7 @@ test("card generation plays an assembly scene and settles every part visible", a
   await page.waitForTimeout(250);
   expect(await page.locator("#forge-step-number").textContent()).not.toBe("06");
   // 完了するとシーンは引っ込み、手順はすべて完了になる。
-  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 8000 });
+  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 15000 });
   await expect(page.locator("#forge-step-number")).toHaveText("06");
   for (const name of STEPS)
     await expect(page.locator(`[data-forge-step="${name}"]`)).toHaveAttribute(
@@ -56,7 +56,7 @@ test("opening the app on home and then the creator still plays the scene", async
   await page.locator('.view-nav [data-view="creator"]').click();
   await expect(page.locator("#forge-scene")).toBeVisible();
   await expect(page.locator("#forge-step-number")).not.toHaveText("06");
-  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 8000 });
+  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 15000 });
   for (const name of STEPS)
     await expect(page.locator(`[data-forge-step="${name}"]`)).toHaveAttribute(
       "data-state",
@@ -76,8 +76,8 @@ test("opening the creator while the first sample is still being made still plays
   await expect(page.locator("#home-screen")).toBeVisible();
   // 最初のサンプル生成が終わる前に作成タブへ移っても、シーンは見せる。
   await page.locator('.view-nav [data-view="creator"]').click();
-  await expect(page.locator("#forge-scene")).toBeVisible({ timeout: 8000 });
-  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 12000 });
+  await expect(page.locator("#forge-scene")).toBeVisible({ timeout: 15000 });
+  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 18000 });
   await expect(page.locator("#forge-step-number")).toHaveText("06");
   await expect(page.locator("#card-shell")).not.toHaveClass(/assembling/);
 });
@@ -92,7 +92,7 @@ test("the device asking for reduced motion no longer hides the scene", async ({
   await expect(page.locator("body")).toHaveAttribute("data-motion", "on");
   await page.locator("#sample-button").click();
   await expect(page.locator("#forge-scene")).toBeVisible();
-  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 8000 });
+  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 15000 });
 });
 
 test("motion off skips the assembly scene and shows the card immediately", async ({

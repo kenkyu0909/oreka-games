@@ -117,7 +117,7 @@ async function previewFromResult(result) {
 const FORGE_STEPS = ["frame", "photo", "features", "stats", "moves", "finish"];
 // 解析が一瞬で終わっても、前半の工程を必ず見せてから組み立てへ移る。
 // 速すぎると何が起きたか分からないので、6工程を一通り目で追える長さにする。
-const FORGE_LEAD_IN = 2200;
+const FORGE_LEAD_IN = 3300;
 // 生成シーンは作成タブの中にある。ホームなど別のタブを見ている間に再生しても
 // 誰にも見えないので、その場合は演出だけ後回しにして、作成タブを開いた時に見せる。
 const forgeVisible = () => document.body.dataset.view === "creator";
@@ -180,12 +180,12 @@ function forgePlay(run) {
       }, ms),
     );
   forgeSceneStep("frame", "active");
-  at(560, () => {
+  at(840, () => {
     forgeSceneStep("frame", "done");
     forgeSceneStep("photo", "active");
     forgeMeter(20);
   });
-  at(1400, () => {
+  at(2100, () => {
     forgeSceneStep("photo", "done");
     forgeSceneStep("features", "active");
     forgeMeter(44);
@@ -233,19 +233,19 @@ function forgeAssembleNow(run) {
         if (run === forgeRun) action();
       }, ms),
     );
-  at(620, () => {
+  at(930, () => {
     forgeSceneStep("stats", "done");
     forgeSceneStep("moves", "active");
   });
-  at(1240, () => {
+  at(1860, () => {
     forgeSceneStep("moves", "done");
     forgeSceneStep("finish", "active");
   });
-  at(1860, () => {
+  at(2790, () => {
     forgeSceneStep("finish", "done");
     forgeMeter(100);
   });
-  at(2800, () => {
+  at(4200, () => {
     $("card-shell").classList.remove("assembling");
     scene.hidden = true;
     forgeMeter(0);

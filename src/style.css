@@ -969,6 +969,8 @@ img {
   align-items: center;
   min-height: 0;
   isolation: isolate;
+  /* 生成シーンの左右に工程を並べられるかどうかを、ステージ幅で判断する。 */
+  container-type: inline-size;
 }
 .forge-circle {
   position: absolute;
@@ -1580,6 +1582,7 @@ img {
   box-shadow: 0 0 10px #ffb35c88;
   transition: width 0.35s ease;
 }
+/* 幅が足りない時は上の行にまとめる（広い時は下の @container で左右に並べる）。 */
 .forge-steps {
   display: flex;
   flex-wrap: wrap;
@@ -1636,28 +1639,28 @@ img {
 }
 /* 部品が1つずつ嵌まる。animation-fill-modeはbackwardsのみで、終了後は通常表示へ戻る。 */
 .card-shell.assembling .game-card {
-  animation: forge-snap 0.6s cubic-bezier(0.2, 0.8, 0.3, 1.35) backwards;
+  animation: forge-snap 0.9s cubic-bezier(0.2, 0.8, 0.3, 1.35) backwards;
 }
 .card-shell.assembling .game-card > * {
-  animation: forge-part 0.62s cubic-bezier(0.16, 0.9, 0.3, 1.35) backwards;
+  animation: forge-part 0.93s cubic-bezier(0.16, 0.9, 0.3, 1.35) backwards;
 }
 .card-shell.assembling .photo-frame {
-  animation-delay: 0.1s;
+  animation-delay: 0.15s;
 }
 .card-shell.assembling .card-meta {
-  animation-delay: 0.35s;
+  animation-delay: 0.53s;
 }
 .card-shell.assembling .card-heading {
-  animation-delay: 0.6s;
+  animation-delay: 0.9s;
 }
 .card-shell.assembling .card-primary-stats {
-  animation-delay: 0.95s;
+  animation-delay: 1.43s;
 }
 .card-shell.assembling .card-mini-moves {
-  animation-delay: 1.3s;
+  animation-delay: 1.95s;
 }
 .card-shell.assembling .card-footer {
-  animation-delay: 1.65s;
+  animation-delay: 2.48s;
 }
 @keyframes forge-snap {
   from {
@@ -1684,6 +1687,69 @@ img {
     opacity: 1;
     transform: none;
     filter: none;
+  }
+}
+/* ステージが広いときは、6工程をカードの左右に3つずつ並べ、
+   終わった工程はカードへ向かって飛び、重なって消える。 */
+@container (min-width: 560px) {
+  .forge-scene:before {
+    height: 88px;
+  }
+  .forge-steps {
+    position: absolute;
+    inset: 80px 0 72px;
+    display: grid;
+    grid-template-rows: repeat(3, auto);
+    grid-auto-flow: column;
+    align-content: center;
+    justify-content: space-between;
+    gap: 24px 0;
+    margin: 0 2px;
+  }
+  .forge-steps li {
+    position: relative;
+    width: max-content;
+    max-width: 100%;
+  }
+  .forge-steps li[data-state="done"] {
+    animation: forge-join-left 0.95s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+  }
+  .forge-steps li:nth-child(n + 4)[data-state="done"] {
+    animation-name: forge-join-right;
+  }
+}
+@keyframes forge-join-left {
+  0% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  55% {
+    opacity: 0.55;
+    transform: translateX(14cqw) scale(0.94);
+    filter: brightness(1.7);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(26cqw) scale(0.86);
+    filter: brightness(1.7);
+  }
+}
+@keyframes forge-join-right {
+  0% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  55% {
+    opacity: 0.55;
+    transform: translateX(-14cqw) scale(0.94);
+    filter: brightness(1.7);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-26cqw) scale(0.86);
+    filter: brightness(1.7);
   }
 }
 @media (max-width: 720px) {
