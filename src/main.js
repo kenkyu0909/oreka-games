@@ -117,10 +117,15 @@ async function previewFromResult(result) {
 const FORGE_STEPS = ["frame", "photo", "features", "stats", "moves", "finish"];
 // 解析が一瞬で終わっても、前半の工程を必ず見せてから組み立てへ移る。
 const FORGE_LEAD_IN = 640;
+// 生成シーンは作成タブの中にある。ホームなど別のタブを見ている間に再生しても
+// 誰にも見えないので、その場合は演出だけ後回しにして、作成タブを開いた時に見せる。
+const forgeVisible = () => document.body.dataset.view === "creator";
 let forgeTimers = [];
 let forgeRun = 0;
 let forgeStartedAt = 0;
 let forgeCount = 0;
+let forgeShown = false;
+let forgePending = false;
 function forgeClear() {
   forgeTimers.forEach(clearTimeout);
   forgeTimers = [];
@@ -146,6 +151,7 @@ function forgeBegin() {
   const scene = $("forge-scene");
   forgeStartedAt = performance.now();
   forgeCount = 0;
+  forgePending = false;
   $("forge-step-number").textContent = "00";
   document.querySelectorAll("[data-forge-step]").forEach((step) => {
     step.dataset.state = "idle";
@@ -153,7 +159,8 @@ function forgeBegin() {
   });
   forgeMeter(0);
   $("card-shell").classList.remove("assembling");
-  if (!effects.motion) {
+  forgeShown = effects.motion && forgeVisible();
+  if (!forgeShown) {
     scene.hidden = true;
     return run;
   }
@@ -181,6 +188,13 @@ function forgeAssemble(run) {
   if (run !== forgeRun) return;
   if (!effects.motion) {
     forgeCancel(run);
+    return;
+  }
+  // 見えていない間に出来上がった場合は、その場では再生せず、
+  // 作成タブを開いた時に最初から見せ直す。
+  if (!forgeShown || !forgeVisible()) {
+    forgeCancel(run);
+    forgePending = true;
     return;
   }
   // 解析が速すぎる場合は、前半の工程を見せる時間を残してから組み立てる。
@@ -237,6 +251,12 @@ function forgeCancel(run) {
   $("card-shell").classList.remove("assembling");
   $("forge-scene").hidden = true;
 }
+// 後回しにしていた生成シーンは、作成タブを開いた時に最初から再生する。
+document.addEventListener("reframe-view", (event) => {
+  if (event.detail?.view !== "creator" || !forgePending || !effects.motion) return;
+  forgePending = false;
+  forgeAssemble(forgeBegin());
+});
 
 async function loadPhoto(file, sampleName = null) {
   if (!file || processing || exporting) return;

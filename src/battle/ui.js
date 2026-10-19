@@ -129,6 +129,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
       button.classList.toggle("selected", button.dataset.view === view);
       button.setAttribute("aria-pressed", String(button.dataset.view === view));
     });
+    document.dispatchEvent(new CustomEvent("reframe-view", { detail: { view } }));
     history.replaceState(
       null,
       "",

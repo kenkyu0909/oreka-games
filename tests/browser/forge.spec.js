@@ -42,6 +42,32 @@ test("card generation plays an assembly scene and settles every part visible", a
   await expect(page.locator("#card-mini-moves > span")).toHaveCount(4);
 });
 
+test("opening the app on home and then the creator still plays the scene", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  // ホームで起動すると、最初のサンプルは作成タブが見えていない間に出来上がる。
+  await page.goto("/");
+  await expect(page.locator("#home-screen")).toBeVisible();
+  await expect(page.locator("#download-button")).toBeEnabled();
+  await expect(page.locator("#forge-scene")).toBeHidden();
+  // 作成タブを開いた時点で、生成シーンが最初から再生される。
+  await page.locator('.view-nav [data-view="creator"]').click();
+  await expect(page.locator("#forge-scene")).toBeVisible();
+  await expect(page.locator("#forge-step-number")).not.toHaveText("06");
+  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 8000 });
+  for (const name of STEPS)
+    await expect(page.locator(`[data-forge-step="${name}"]`)).toHaveAttribute(
+      "data-state",
+      "done",
+    );
+  await expect(page.locator("#card-shell")).not.toHaveClass(/assembling/);
+  const opacity = await page
+    .locator(".game-card .photo-frame")
+    .evaluate((el) => getComputedStyle(el).opacity);
+  expect(opacity).toBe("1");
+});
+
 test("turning effects off skips the assembly scene and shows the card immediately", async ({
   page,
 }) => {
