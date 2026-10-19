@@ -1497,14 +1497,6 @@ img {
   overflow: hidden;
   pointer-events: none;
 }
-.forge-scene:before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 172px;
-  background: linear-gradient(#0c0910f7, #0c091000);
-  z-index: -1;
-}
 .forge-scene[hidden] {
   display: none;
 }
@@ -1525,6 +1517,8 @@ img {
   font: 10px/1.4 var(--display);
   letter-spacing: 1px;
   color: #8a6f80;
+  /* 狭い画面ではカードの上に重なるので、下地なしでも読めるように影を敷く。 */
+  text-shadow: 0 1px 3px #0c0910cc;
   transition: color 0.2s;
 }
 .forge-steps b {
@@ -1538,6 +1532,7 @@ img {
   border: 1px solid #ffffff22;
   border-radius: 2px;
   color: #7d6473;
+  background: #0c091080;
 }
 .forge-steps li[data-state="active"] {
   color: #ffe1a6;
@@ -1626,9 +1621,6 @@ img {
 /* ステージが広いときは、6工程をカードの左右に3つずつ並べ、
    終わった工程はカードへ向かって飛び、重なって消える。 */
 @container (min-width: 560px) {
-  .forge-scene:before {
-    height: 88px;
-  }
   .forge-steps {
     position: absolute;
     inset: 8px 0 72px;
