@@ -11,8 +11,13 @@ test("card generation plays an assembly scene and settles every part visible", a
   await page.locator("#sample-button").click();
   // 解析中は組み立てシーンと進行状況が出る。
   await expect(page.locator("#forge-scene")).toBeVisible();
+  await expect(page.locator("#forge-status-count")).toBeVisible();
+  // 解析が一瞬で終わっても、前半の工程を飛ばさずに見せてから組み立てる。
+  await page.waitForTimeout(250);
+  expect(await page.locator("#forge-step-number").textContent()).not.toBe("06");
   // 完了するとシーンは引っ込み、手順はすべて完了になる。
   await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 8000 });
+  await expect(page.locator("#forge-step-number")).toHaveText("06");
   for (const name of STEPS)
     await expect(page.locator(`[data-forge-step="${name}"]`)).toHaveAttribute(
       "data-state",

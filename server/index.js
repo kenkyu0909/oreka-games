@@ -38,6 +38,18 @@ export const FINISHED_TTL = 5 * 60_000;
 export const RECONNECT_GRACE = 90_000;
 export const ACTION_TIMEOUT = 120_000;
 
+// 締切時の勝敗。交代フェーズでは「待機」が自動で入るため、それを行動として
+// 数えない。数えてしまうと、何も選ばずに待っていた側が時間切れで勝ってしまう。
+export function timeoutOutcome(pending, phase) {
+  const autoWait = phase === "replace";
+  const acted = pending.map(
+    (entry) => Boolean(entry) && !(autoWait && entry.type === "wait"),
+  );
+  if (acted[0] && !acted[1]) return 0;
+  if (acted[1] && !acted[0]) return 1;
+  return "draw";
+}
+
 export function createGameServer({
   distDir = defaultDist,
   now = Date.now,
@@ -507,11 +519,7 @@ export function createGameServer({
       ) {
         finishRoom(
           room,
-          room.pending[0] && !room.pending[1]
-            ? 0
-            : room.pending[1] && !room.pending[0]
-              ? 1
-              : "draw",
+          timeoutOutcome(room.pending, room.battle?.phase),
           "timeout",
         );
       }

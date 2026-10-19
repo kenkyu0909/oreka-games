@@ -4,6 +4,7 @@ import { once } from "node:events";
 import { WebSocket } from "ws";
 import {
   createGameServer,
+  timeoutOutcome,
   ACTION_TIMEOUT,
   RECONNECT_GRACE,
   ROOM_TTL,
@@ -204,6 +205,24 @@ test("120-second deadline awards the committed player; neither choosing is a dra
     (s) => s.battle.phase === "finished",
   );
   assert.equal(draw.battle.winner, "draw");
+});
+test("a timeout never credits a side that only auto-waited while replacing", () => {
+  // 通常の選択フェーズでは、行動済みの側が勝つ。両者未行動なら引き分け。
+  assert.equal(timeoutOutcome([{ type: "move" }, null], "select"), 0);
+  assert.equal(timeoutOutcome([null, { type: "move" }], "select"), 1);
+  assert.equal(
+    timeoutOutcome([{ type: "move" }, { type: "move" }], "select"),
+    "draw",
+  );
+  // 交代フェーズの自動待機だけで勝ちを持ち去らない。
+  assert.equal(timeoutOutcome([{ type: "wait" }, null], "replace"), "draw");
+  assert.equal(
+    timeoutOutcome([{ type: "wait" }, { type: "wait" }], "replace"),
+    "draw",
+  );
+  // 実際に交代を選んだ側は、相手が動いていなければ勝つ。
+  assert.equal(timeoutOutcome([{ type: "wait" }, { type: "switch" }], "replace"), 1);
+  assert.equal(timeoutOutcome([{ type: "switch" }, { type: "wait" }], "replace"), 0);
 });
 test("disconnect pauses turn deadline then forfeits after 90 seconds", async (t) => {
   const env = await setup(t);

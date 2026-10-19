@@ -114,13 +114,23 @@ async function previewFromResult(result) {
 // カード生成シーン。解析中は「鋳造→量子化→特徴抽出」を進め、
 // カードが届いたら「能力→技→輝き」を刻みながら部品を1つずつ組み上げる。
 // 演出オフ・端末の動きを減らす設定では何もしない（通常表示のまま）。
+const FORGE_STEPS = ["frame", "photo", "features", "stats", "moves", "finish"];
+// 解析が一瞬で終わっても、前半の工程を必ず見せてから組み立てへ移る。
+const FORGE_LEAD_IN = 640;
 let forgeTimers = [];
 let forgeRun = 0;
+let forgeStartedAt = 0;
+let forgeCount = 0;
 function forgeClear() {
   forgeTimers.forEach(clearTimeout);
   forgeTimers = [];
 }
 function forgeSceneStep(name, state) {
+  if (state === "done") {
+    const index = FORGE_STEPS.indexOf(name);
+    if (index >= 0) forgeCount = Math.max(forgeCount, index + 1);
+    $("forge-step-number").textContent = String(forgeCount).padStart(2, "0");
+  }
   const step = document.querySelector(`[data-forge-step="${name}"]`);
   if (!step) return;
   step.dataset.state = state;
@@ -134,6 +144,9 @@ function forgeBegin() {
   forgeClear();
   const run = ++forgeRun;
   const scene = $("forge-scene");
+  forgeStartedAt = performance.now();
+  forgeCount = 0;
+  $("forge-step-number").textContent = "00";
   document.querySelectorAll("[data-forge-step]").forEach((step) => {
     step.dataset.state = "idle";
     step.querySelector("i").textContent = "待機";
@@ -170,6 +183,20 @@ function forgeAssemble(run) {
     forgeCancel(run);
     return;
   }
+  // 解析が速すぎる場合は、前半の工程を見せる時間を残してから組み立てる。
+  const wait = Math.max(0, FORGE_LEAD_IN - (performance.now() - forgeStartedAt));
+  if (wait > 0) {
+    forgeTimers.push(
+      setTimeout(() => {
+        if (run === forgeRun) forgeAssembleNow(run);
+      }, wait),
+    );
+    return;
+  }
+  forgeAssembleNow(run);
+}
+function forgeAssembleNow(run) {
+  if (run !== forgeRun) return;
   forgeClear();
   const scene = $("forge-scene");
   // 解析が速い場合はタイマーより先にここへ来るため、前半の工程をまとめて完了にする。

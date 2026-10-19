@@ -283,7 +283,7 @@
 }
 .party-card[class*="finish-"] {
   border: 3px solid #171c26;
-  outline: 1px solid #c39a48;
+  outline: 1px solid var(--metal, #c39a48);
   background: #fff2cf;
 }
 .party-card .party-card-heading {
@@ -293,6 +293,24 @@
   font-weight: 900;
   border-left: 4px solid var(--attribute);
   padding-left: 6px;
+}
+/* Foil finishes stay light (dark labels above would vanish on a dark card),
+   and differ by a tinted frame so the rarity is visible at a glance. */
+.party-card.finish-normal {
+  --metal: #c39a48;
+  background: linear-gradient(140deg, #fff8e2, #f3e3bd);
+}
+.party-card.finish-silver {
+  --metal: #9db0c2;
+  background: linear-gradient(140deg, #fbfcff, #dbe3e9);
+}
+.party-card.finish-holo {
+  --metal: #a893c9;
+  background: linear-gradient(140deg, #f6f0ff, #e3eede 55%, #fbefd2);
+}
+.party-card.finish-prism {
+  --metal: #dfae42;
+  background: linear-gradient(140deg, #fff6c4, #f1ddf2 45%, #d8eef0 78%, #fff6d0);
 }
 @media (max-width: 720px) {
   .game-card[class*="finish-"] {

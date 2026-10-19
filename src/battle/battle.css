@@ -311,7 +311,7 @@
 }
 .deck-tip small {
   font-size: 9px;
-  color: #6f5167;
+  color: #9e7f97;
 }
 .match-panel {
   background: linear-gradient(135deg, #231821, #16121a);
@@ -3142,17 +3142,16 @@
     max-height: 430px;
   }
 }
-.party-card.finish-silver,
+/* The arena card keeps its foil tint; lobby party cards use the light finish
+   treatment from card-frame.css so their dark labels stay readable. */
 .duel-card.finish-silver {
   border-color: #718391;
   background: linear-gradient(130deg, #4f5b6a, #22232e 55%, #424e66);
 }
-.party-card.finish-holo,
 .duel-card.finish-holo {
   border-color: #827291;
   background: linear-gradient(130deg, #61547a, #292233 55%, #465952);
 }
-.party-card.finish-prism,
 .duel-card.finish-prism {
   border-color: #b88c61;
   background: linear-gradient(130deg, #785a43, #3a243d 55%, #605575);
