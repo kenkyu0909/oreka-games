@@ -14,19 +14,21 @@ test("card generation plays an assembly scene and settles every part visible", a
   await page.goto("/#creator");
   await expect(page.locator("#download-button")).toBeEnabled();
   await page.locator("#sample-button").click();
-  // 解析中は組み立てシーンと進行状況が出る。
+  // 解析中は組み立てシーンと工程リストが出る。
   await expect(page.locator("#forge-scene")).toBeVisible();
-  await expect(page.locator("#forge-status-count")).toBeVisible();
+  await expect(page.locator("#forge-steps")).toBeVisible();
   // 最初は枠だけの空のカード。工程が進むにつれて中身が嵌まる。
   await expect(page.locator("#card-shell")).toHaveClass(/assembling/);
   expect(await partOpacity(page, ".card-mini-moves")).toBe("0");
   expect(await partOpacity(page, ".card-footer")).toBe("0");
   // 解析が一瞬で終わっても、前半の工程を飛ばさずに見せてから組み立てる。
   await page.waitForTimeout(250);
-  expect(await page.locator("#forge-step-number").textContent()).not.toBe("06");
+  await expect(page.locator('[data-forge-step="finish"]')).not.toHaveAttribute(
+    "data-state",
+    "done",
+  );
   // 完了するとシーンは引っ込み、手順はすべて完了になる。
   await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 15000 });
-  await expect(page.locator("#forge-step-number")).toHaveText("06");
   for (const name of STEPS)
     await expect(page.locator(`[data-forge-step="${name}"]`)).toHaveAttribute(
       "data-state",
@@ -60,7 +62,10 @@ test("opening the app on home and then the creator still plays the scene", async
   // 作成タブを開いた時点で、生成シーンが最初から再生される。
   await page.locator('.view-nav [data-view="creator"]').click();
   await expect(page.locator("#forge-scene")).toBeVisible();
-  await expect(page.locator("#forge-step-number")).not.toHaveText("06");
+  await expect(page.locator('[data-forge-step="finish"]')).not.toHaveAttribute(
+    "data-state",
+    "done",
+  );
   await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 15000 });
   for (const name of STEPS)
     await expect(page.locator(`[data-forge-step="${name}"]`)).toHaveAttribute(
@@ -83,7 +88,10 @@ test("opening the creator while the first sample is still being made still plays
   await page.locator('.view-nav [data-view="creator"]').click();
   await expect(page.locator("#forge-scene")).toBeVisible({ timeout: 15000 });
   await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 18000 });
-  await expect(page.locator("#forge-step-number")).toHaveText("06");
+  await expect(page.locator('[data-forge-step="finish"]')).toHaveAttribute(
+    "data-state",
+    "done",
+  );
   await expect(page.locator("#card-shell")).not.toHaveClass(/assembling/);
 });
 

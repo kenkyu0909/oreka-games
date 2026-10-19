@@ -1508,48 +1508,6 @@ img {
 .forge-scene[hidden] {
   display: none;
 }
-.forge-status {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 0 8px;
-  font: 700 11px/1 var(--display);
-  letter-spacing: 2px;
-  color: #d9b06a;
-}
-.forge-status > span {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  color: #8a6f80;
-  letter-spacing: 1px;
-}
-.forge-status i {
-  font-style: normal;
-  font: 700 24px/1 var(--display);
-  letter-spacing: 0;
-  color: #ffe1a6;
-  text-shadow: 0 0 10px #ffb35c99;
-}
-.forge-status em {
-  font-style: normal;
-  font-size: 10px;
-}
-.forge-meter {
-  height: 5px;
-  margin: 0 6px;
-  background: #ffffff14;
-  overflow: hidden;
-}
-.forge-meter > span {
-  display: block;
-  width: 0;
-  height: 100%;
-  background: linear-gradient(90deg, #ffcf7d, #ff7a59);
-  box-shadow: 0 0 10px #ffb35c88;
-  transition: width 0.35s ease;
-}
 /* 幅が足りない時は上の行にまとめる（広い時は下の @container で左右に並べる）。 */
 .forge-steps {
   display: flex;
@@ -1673,7 +1631,7 @@ img {
   }
   .forge-steps {
     position: absolute;
-    inset: 80px 0 72px;
+    inset: 8px 0 72px;
     display: grid;
     grid-template-rows: repeat(3, auto);
     grid-auto-flow: column;
@@ -1729,12 +1687,6 @@ img {
   }
 }
 @media (max-width: 720px) {
-  .forge-status {
-    margin: 0 4px;
-  }
-  .forge-status i {
-    font-size: 20px;
-  }
   .forge-steps {
     gap: 3px 9px;
   }

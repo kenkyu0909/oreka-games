@@ -124,7 +124,6 @@ const forgeVisible = () => document.body.dataset.view === "creator";
 let forgeTimers = [];
 let forgeRun = 0;
 let forgeStartedAt = 0;
-let forgeCount = 0;
 let forgeShown = false;
 let forgePending = false;
 let forgeRunning = false;
@@ -134,19 +133,12 @@ function forgeClear() {
 }
 function forgeSceneStep(name, state) {
   const index = FORGE_STEPS.indexOf(name);
-  if (state === "done" && index >= 0) {
-    forgeCount = Math.max(forgeCount, index + 1);
-    $("forge-step-number").textContent = String(forgeCount).padStart(2, "0");
-    forgeCardStep(index + 1);
-  }
+  if (state === "done" && index >= 0) forgeCardStep(index + 1);
   const step = document.querySelector(`[data-forge-step="${name}"]`);
   if (!step) return;
   step.dataset.state = state;
   step.querySelector("i").textContent =
     state === "done" ? "完了" : state === "active" ? "生成中" : "待機";
-}
-function forgeMeter(percent) {
-  $("forge-meter-fill").style.width = `${percent}%`;
 }
 // 生成中は空のカードから始め、工程が終わるたびに中身を1つずつ嵌める。
 // ff-N は N番目の工程が終わった印（style.css 側でそのパーツを出す）。
@@ -164,15 +156,12 @@ function forgeBegin() {
   forgeClear();
   const run = ++forgeRun;
   forgeStartedAt = performance.now();
-  forgeCount = 0;
   forgePending = false;
   forgeRunning = true;
-  $("forge-step-number").textContent = "00";
   document.querySelectorAll("[data-forge-step]").forEach((step) => {
     step.dataset.state = "idle";
     step.querySelector("i").textContent = "待機";
   });
-  forgeMeter(0);
   // 何も入っていない、枠だけのカードから始める。
   forgeCardReset();
   $("card-shell").classList.add("assembling");
@@ -198,12 +187,10 @@ function forgePlay(run) {
   at(840, () => {
     forgeSceneStep("frame", "done");
     forgeSceneStep("photo", "active");
-    forgeMeter(20);
   });
   at(2100, () => {
     forgeSceneStep("photo", "done");
     forgeSceneStep("features", "active");
-    forgeMeter(44);
   });
 }
 function forgeAssemble(run) {
@@ -240,7 +227,6 @@ function forgeAssembleNow(run) {
     forgeSceneStep(name, "done"),
   );
   forgeSceneStep("stats", "active");
-  forgeMeter(66);
   const at = (ms, action) =>
     forgeTimers.push(
       setTimeout(() => {
@@ -257,12 +243,10 @@ function forgeAssembleNow(run) {
   });
   at(2790, () => {
     forgeSceneStep("finish", "done");
-    forgeMeter(100);
   });
   at(4200, () => {
     forgeCardReset();
     scene.hidden = true;
-    forgeMeter(0);
     forgeRunning = false;
   });
 }
