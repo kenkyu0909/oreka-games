@@ -116,7 +116,8 @@ async function previewFromResult(result) {
 // 演出オフ・端末の動きを減らす設定では何もしない（通常表示のまま）。
 const FORGE_STEPS = ["frame", "photo", "features", "stats", "moves", "finish"];
 // 解析が一瞬で終わっても、前半の工程を必ず見せてから組み立てへ移る。
-const FORGE_LEAD_IN = 640;
+// 速すぎると何が起きたか分からないので、6工程を一通り目で追える長さにする。
+const FORGE_LEAD_IN = 2200;
 // 生成シーンは作成タブの中にある。ホームなど別のタブを見ている間に再生しても
 // 誰にも見えないので、その場合は演出だけ後回しにして、作成タブを開いた時に見せる。
 const forgeVisible = () => document.body.dataset.view === "creator";
@@ -126,6 +127,7 @@ let forgeStartedAt = 0;
 let forgeCount = 0;
 let forgeShown = false;
 let forgePending = false;
+let forgeRunning = false;
 function forgeClear() {
   forgeTimers.forEach(clearTimeout);
   forgeTimers = [];
@@ -148,10 +150,10 @@ function forgeMeter(percent) {
 function forgeBegin() {
   forgeClear();
   const run = ++forgeRun;
-  const scene = $("forge-scene");
   forgeStartedAt = performance.now();
   forgeCount = 0;
   forgePending = false;
+  forgeRunning = true;
   $("forge-step-number").textContent = "00";
   document.querySelectorAll("[data-forge-step]").forEach((step) => {
     step.dataset.state = "idle";
@@ -161,9 +163,15 @@ function forgeBegin() {
   $("card-shell").classList.remove("assembling");
   forgeShown = effects.motion && forgeVisible();
   if (!forgeShown) {
-    scene.hidden = true;
+    $("forge-scene").hidden = true;
     return run;
   }
+  forgePlay(run);
+  return run;
+}
+// 前半の工程を刻みながらシーンを出す。
+function forgePlay(run) {
+  const scene = $("forge-scene");
   scene.hidden = false;
   const at = (ms, action) =>
     forgeTimers.push(
@@ -172,17 +180,16 @@ function forgeBegin() {
       }, ms),
     );
   forgeSceneStep("frame", "active");
-  at(180, () => {
+  at(560, () => {
     forgeSceneStep("frame", "done");
     forgeSceneStep("photo", "active");
     forgeMeter(20);
   });
-  at(620, () => {
+  at(1400, () => {
     forgeSceneStep("photo", "done");
     forgeSceneStep("features", "active");
     forgeMeter(44);
   });
-  return run;
 }
 function forgeAssemble(run) {
   if (run !== forgeRun) return;
@@ -226,36 +233,47 @@ function forgeAssembleNow(run) {
         if (run === forgeRun) action();
       }, ms),
     );
-  at(300, () => {
+  at(620, () => {
     forgeSceneStep("stats", "done");
     forgeSceneStep("moves", "active");
   });
-  at(580, () => {
+  at(1240, () => {
     forgeSceneStep("moves", "done");
     forgeSceneStep("finish", "active");
   });
-  at(860, () => {
+  at(1860, () => {
     forgeSceneStep("finish", "done");
     forgeMeter(100);
   });
-  at(1480, () => {
+  at(2800, () => {
     $("card-shell").classList.remove("assembling");
     scene.hidden = true;
     forgeMeter(0);
+    forgeRunning = false;
   });
 }
 function forgeCancel(run) {
   if (run !== undefined && run !== forgeRun) return;
   forgeClear();
   forgeRun += 1;
+  forgeRunning = false;
   $("card-shell").classList.remove("assembling");
   $("forge-scene").hidden = true;
 }
-// 後回しにしていた生成シーンは、作成タブを開いた時に最初から再生する。
+// 見えていなかった生成シーンは、作成タブを開いた時に見せ直す。
 document.addEventListener("reframe-view", (event) => {
-  if (event.detail?.view !== "creator" || !forgePending || !effects.motion) return;
-  forgePending = false;
-  forgeAssemble(forgeBegin());
+  if (event.detail?.view !== "creator" || !effects.motion) return;
+  // 見えていない間に出来上がっていた分は、最初から再生する。
+  if (forgePending) {
+    forgePending = false;
+    forgeAssemble(forgeBegin());
+    return;
+  }
+  // まだ生成中の分は、そのまま続きを見せる。
+  if (forgeRunning && !forgeShown) {
+    forgeShown = true;
+    forgePlay(forgeRun);
+  }
 });
 
 async function loadPhoto(file, sampleName = null) {

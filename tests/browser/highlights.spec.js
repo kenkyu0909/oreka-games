@@ -50,15 +50,9 @@ test("legend import runs the real worker, shows a rare awakening and enters the 
   await expect(page.locator("#rare-awakening")).not.toBeVisible();
 });
 
-test("turning off effects dismisses the rare awakening immediately and normal photos do not trigger it", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await createLegend(page, "10-shadow-reaper");
-  await expect(page.locator("#rare-awakening")).toBeVisible();
-  await page.locator("#motion-toggle").click();
-  await expect(page.locator("#rare-awakening")).not.toBeVisible();
-  await page.locator("#motion-toggle").click();
+test("normal photos do not trigger the rare awakening", async ({ page }) => {
+  await page.goto("/#creator");
+  await expect(page.locator("#download-button")).toBeEnabled();
   await page.locator("#photo-input").setInputFiles({
     name: "normal.png",
     mimeType: "image/png",

@@ -1,6 +1,7 @@
 import { test, expect, devices } from "@playwright/test";
 import jsQR from "jsqr";
 import { encode } from "fast-png";
+import { motionOff } from "./motion.js";
 
 const origin = "https://3000-mobile-check.e2b.app";
 // Serve the real build at a secure test origin without making external requests.
@@ -142,8 +143,8 @@ for (const device of ["iPhone 13", "Pixel 7"]) {
   }) => {
     const context = await browser.newContext({
       ...devices[device],
-      reducedMotion: "reduce",
     });
+    await motionOff(context);
     const page = await context.newPage(),
       errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
@@ -152,7 +153,7 @@ for (const device of ["iPhone 13", "Pixel 7"]) {
       await page.locator("#mobile-guide-button").tap();
       await expect(page.locator("#mobile-guide")).toBeVisible();
       await page.locator("#mobile-guide-close").tap();
-      for (const id of ["motion-toggle", "sound-toggle"]) {
+      for (const id of ["sound-toggle"]) {
         const box = await page.locator(`#${id}`).boundingBox();
         expect(box.width).toBeGreaterThanOrEqual(44);
         expect(box.height).toBeGreaterThanOrEqual(44);

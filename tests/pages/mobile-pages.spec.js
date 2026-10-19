@@ -1,5 +1,6 @@
 import { test, expect, devices } from "@playwright/test";
 import { encode } from "fast-png";
+import { motionOff } from "../browser/motion.js";
 import { existsSync, readFileSync } from "node:fs";
 
 test("published build does not contain the spoiler pack or a catalogue entry", async ({
@@ -35,8 +36,8 @@ for (const device of ["iPhone 13", "Pixel 7"]) {
   }) => {
     const context = await browser.newContext({
       ...devices[device],
-      reducedMotion: "reduce",
     });
+    await motionOff(context);
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));

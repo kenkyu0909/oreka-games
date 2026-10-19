@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { encode } from "fast-png";
+import { motionOff } from "./motion.js";
 
 async function openLobby(page) {
   await page.goto("/#battle");
@@ -55,7 +56,7 @@ test("photo creation → add to team → reorder/remove; no photo upload for sol
 });
 
 async function cpu(page) {
-  await page.emulateMedia({ reducedMotion: "reduce" });
+  await motionOff(page);
   await openLobby(page);
   await samples(page);
   await page.locator(".test-settings summary").click();
@@ -123,10 +124,10 @@ test("CPU turns resolve both choices and switching spends one turn", async ({
   );
 });
 async function onlinePair(browser, secondAnimated = false) {
-  const c1 = await browser.newContext({ reducedMotion: "reduce" }),
-    c2 = await browser.newContext({
-      reducedMotion: secondAnimated ? "no-preference" : "reduce",
-    });
+  const c1 = await browser.newContext(),
+    c2 = await browser.newContext();
+  await motionOff(c1);
+  if (!secondAnimated) await motionOff(c2);
   const p1 = await c1.newPage(),
     p2 = await c2.newPage();
   await openLobby(p1);

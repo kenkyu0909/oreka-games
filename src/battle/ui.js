@@ -786,8 +786,8 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
       closeModal();
       return;
     }
-    if (action === "sound" || action === "motion") {
-      $(action === "sound" ? "sound-toggle" : "motion-toggle").click();
+    if (action === "sound") {
+      $("sound-toggle").click();
       render();
       return;
     }

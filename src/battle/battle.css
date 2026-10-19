@@ -3779,14 +3779,6 @@
     border-color: #a6baff;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .arena-stage *,
-  .arena-stage *:before,
-  .arena-stage *:after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
 body[data-motion="off"] .arena-stage * {
   animation: none !important;
   transition: none !important;

@@ -274,9 +274,3 @@ body[data-motion="off"] .rare-awakening,
 body[data-motion="off"] .finisher-cut {
   display: none;
 }
-@media (prefers-reduced-motion: reduce) {
-  .rare-awakening,
-  .finisher-cut {
-    display: none;
-  }
-}

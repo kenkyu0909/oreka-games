@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { motionOff } from "./motion.js";
 
 const STEPS = ["frame", "photo", "features", "stats", "moves", "finish"];
 
@@ -68,13 +69,38 @@ test("opening the app on home and then the creator still plays the scene", async
   expect(opacity).toBe("1");
 });
 
-test("turning effects off skips the assembly scene and shows the card immediately", async ({
+test("opening the creator while the first sample is still being made still plays the scene", async ({
   page,
 }) => {
-  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+  await expect(page.locator("#home-screen")).toBeVisible();
+  // 最初のサンプル生成が終わる前に作成タブへ移っても、シーンは見せる。
+  await page.locator('.view-nav [data-view="creator"]').click();
+  await expect(page.locator("#forge-scene")).toBeVisible({ timeout: 8000 });
+  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 12000 });
+  await expect(page.locator("#forge-step-number")).toHaveText("06");
+  await expect(page.locator("#card-shell")).not.toHaveClass(/assembling/);
+});
+
+test("the device asking for reduced motion no longer hides the scene", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/#creator");
   await expect(page.locator("#download-button")).toBeEnabled();
-  await page.locator("#motion-toggle").click();
+  // 端末の「動きを減らす」設定でも演出は止めない。
+  await expect(page.locator("body")).toHaveAttribute("data-motion", "on");
+  await page.locator("#sample-button").click();
+  await expect(page.locator("#forge-scene")).toBeVisible();
+  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 8000 });
+});
+
+test("motion off skips the assembly scene and shows the card immediately", async ({
+  page,
+}) => {
+  await motionOff(page);
+  await page.goto("/#creator");
+  await expect(page.locator("#download-button")).toBeEnabled();
   await expect(page.locator("body")).toHaveAttribute("data-motion", "off");
   const before = await page.locator("#card-photo").getAttribute("src");
   await page.locator("#sample-button").click();

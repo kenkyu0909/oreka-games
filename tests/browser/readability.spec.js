@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
+import { motionOff } from "./motion.js";
 
 async function start(page) {
   await page.goto("/#battle");
@@ -40,13 +41,11 @@ for (const [width, height, minimum] of [
     ).toBe(true);
   });
 }
-for (const mode of ["normal", "reduced", "fast"]) {
+for (const mode of ["normal", "quiet", "fast"]) {
   test(`${mode}: announces each actor, applies hits in order, and separates opposing actions`, async ({
     page,
   }) => {
-    await page.emulateMedia({
-      reducedMotion: mode === "reduced" ? "reduce" : "no-preference",
-    });
+    if (mode === "quiet") await motionOff(page);
     await start(page);
     if (mode === "fast") await page.locator("#fast-battle").check();
     await page.evaluate(() => {
@@ -113,15 +112,12 @@ for (const mode of ["normal", "reduced", "fast"]) {
     expect(firstHit.hp[firstSide]).toBe(charges[0].hp[firstSide]);
   });
 }
-test("turning effects off mid-action keeps ordered playback; explicit skip still exits cleanly", async ({
+test("explicit skip exits an ordered playback cleanly while it is resolving", async ({
   page,
 }) => {
   await start(page);
   await page.locator(".battle-move").first().click();
   await expect(page.locator(".is-resolving")).toBeVisible();
-  await page.locator("#motion-toggle").click();
-  await expect(page.locator(".is-resolving")).toBeVisible();
-  await expect(page.locator(".skill-cutin,.vfx-flight")).toHaveCount(0);
   await expect(page.locator(".battle-move").first()).toBeDisabled();
   // Keyboard activation also works while the render snapshots are advancing.
   await page.locator('[data-action="skip-animation"]').press("Enter");

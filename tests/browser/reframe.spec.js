@@ -3,9 +3,10 @@ import { decode } from "fast-png";
 import { RARE_MOVE_LIBRARY } from "../../src/rare-moves.js";
 import { MOVE_LIBRARY } from "../../src/moves.js";
 import { test, expect } from "@playwright/test";
+import { motionOff } from "./motion.js";
 
 async function quickBattle(page, reduced = false) {
-  if (reduced) await page.emulateMedia({ reducedMotion: "reduce" });
+  if (reduced) await motionOff(page);
   await page.goto("/");
   await expect(page.locator("#home-screen")).toBeVisible();
   await page.locator('[data-home-action="quick-cpu"]').click();
@@ -186,7 +187,7 @@ test("latest action, skip, own skills; battle has no public abilities or opponen
   });
 });
 
-test("audio opt-in persists; reduced motion suppresses attack animations", async ({
+test("audio opt-in persists; motion off suppresses attack animations", async ({
   page,
 }) => {
   const errors = [];
@@ -288,7 +289,7 @@ test("presentation and audio do not change seeded HP, PP or the battle log", asy
 test("mobile home and creator cards do not cover text or controls", async ({
   page,
 }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
+  await motionOff(page);
   for (const size of [
     { width: 390, height: 844 },
     { width: 320, height: 740 },
@@ -436,7 +437,7 @@ test("sound opt-in creates real audio nodes, while mute creates none even during
 test("arcade paper card preserves ten abilities in creator and exports a full PNG", async ({
   page,
 }, testInfo) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
+  await motionOff(page);
   await page.goto("/#creator");
   await expect(page.locator("#download-button")).toBeEnabled();
   await expect(page.locator("#card-primary-stats > div")).toHaveCount(10);

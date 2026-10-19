@@ -6,24 +6,29 @@ try {
 } catch {
   /* optional */
 }
-const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+// 演出は常にオン。端末の「動きを減らす」設定でも、画面の切り替えでも止めない
+// （カードが組み上がる様子や対戦の演出はこのゲームの見どころで、止めると何が
+// 起きたか分からなくなる）。検証やテストで静かに進めたい時だけ、保存設定に
+// motionOff:true を書けば止まる。旧版の motion:false は無視する。
+const motionOn = stored.motionOff !== true;
 let soundEnabled = stored.sound === true;
-let motionEnabled = stored.motion !== false;
 let context;
 let lastSound = 0;
 function save() {
   try {
     localStorage.setItem(
       KEY,
-      JSON.stringify({ sound: soundEnabled, motion: motionEnabled }),
+      JSON.stringify({
+        sound: soundEnabled,
+        ...(motionOn ? {} : { motionOff: true }),
+      }),
     );
   } catch {
     /* private mode */
   }
 }
 function update() {
-  document.body.dataset.motion =
-    motionEnabled && !reduced.matches ? "on" : "off";
+  document.body.dataset.motion = motionOn ? "on" : "off";
   const sound = document.getElementById("sound-toggle");
   sound.setAttribute("aria-pressed", String(soundEnabled));
   sound.setAttribute(
@@ -31,20 +36,6 @@ function update() {
     soundEnabled ? "効果音をオフにする" : "効果音をオンにする",
   );
   sound.querySelector("small").textContent = soundEnabled ? "ON" : "OFF";
-  const motion = document.getElementById("motion-toggle");
-  motion.querySelector("small").textContent =
-    motionEnabled && !reduced.matches ? "ON" : "OFF";
-  motion.title = reduced.matches
-    ? "端末の動きを減らす設定に従い演出オフ"
-    : "演出のオン／オフ";
-  motion.setAttribute(
-    "aria-pressed",
-    String(motionEnabled && !reduced.matches),
-  );
-  motion.setAttribute(
-    "aria-label",
-    motionEnabled && !reduced.matches ? "演出をオフにする" : "演出をオンにする",
-  );
 }
 function audio() {
   try {
@@ -112,7 +103,7 @@ function noise(ctx) {
 }
 export const effects = {
   get motion() {
-    return motionEnabled && !reduced.matches;
+    return motionOn;
   },
   get sound() {
     return soundEnabled;
@@ -172,16 +163,6 @@ document.getElementById("sound-toggle").addEventListener("click", () => {
   update();
   if (!soundEnabled && context) context.suspend().catch(() => {});
   else effects.play("ui");
-});
-document.getElementById("motion-toggle").addEventListener("click", () => {
-  motionEnabled = !motionEnabled;
-  save();
-  update();
-  document.dispatchEvent(new CustomEvent("reframe-motion-change"));
-});
-reduced.addEventListener("change", () => {
-  update();
-  document.dispatchEvent(new CustomEvent("reframe-motion-change"));
 });
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && context) context.suspend().catch(() => {});

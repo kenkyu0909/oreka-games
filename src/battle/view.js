@@ -251,7 +251,7 @@ export function renderModal(model) {
   } else if (model.sheet === "options") {
     title = "対戦メニュー";
     eyebrow = "DUEL OPTIONS";
-    content = `<div class="options-grid"><button class="outline-button" data-action="sound">効果音 <b>${effects.sound ? "ON" : "OFF"}</b></button><button class="outline-button" data-action="motion">演出 <b>${effects.motion ? "ON" : "OFF"}</b></button><button class="outline-button" data-action="history">ログ履歴 ↗</button><button class="outline-button" data-action="rules">ルール・相性 ↗</button>${state?.phase !== "finished" ? '<button class="battle-secondary" data-action="surrender">降参する</button>' : ""}${model.mode === "online" ? '<button class="battle-secondary" data-action="leave">退室する</button>' : ""}</div><p class="panel-note">${model.mode === "cpu" ? `乱数シード：${model.seed} / ${difficultyNames[model.difficulty]}` : "接続が切れた場合は90秒まで復帰できます。"}<br>効果音は合成音です。初期設定はオフ。端末の音量にもご注意ください。</p>`;
+    content = `<div class="options-grid"><button class="outline-button" data-action="sound">効果音 <b>${effects.sound ? "ON" : "OFF"}</b></button><button class="outline-button" data-action="history">ログ履歴 ↗</button><button class="outline-button" data-action="rules">ルール・相性 ↗</button>${state?.phase !== "finished" ? '<button class="battle-secondary" data-action="surrender">降参する</button>' : ""}${model.mode === "online" ? '<button class="battle-secondary" data-action="leave">退室する</button>' : ""}</div><p class="panel-note">${model.mode === "cpu" ? `乱数シード：${model.seed} / ${difficultyNames[model.difficulty]}` : "接続が切れた場合は90秒まで復帰できます。"}<br>効果音は合成音です。初期設定はオフ。端末の音量にもご注意ください。</p>`;
   } else if (model.sheet === "moves") {
     title = "4つの技を見極める";
     eyebrow = "SKILL DATA";
