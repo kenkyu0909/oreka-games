@@ -1536,38 +1536,6 @@ img {
   font-style: normal;
   font-size: 10px;
 }
-.forge-scan {
-  position: absolute;
-  left: -2%;
-  right: -2%;
-  top: 0;
-  height: 16%;
-  z-index: -1;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    #ffd98a30 42%,
-    #fff6d07a 50%,
-    #ffd98a30 58%,
-    transparent
-  );
-  mix-blend-mode: screen;
-  animation: forge-scan 1.05s ease-in-out infinite;
-}
-@keyframes forge-scan {
-  0% {
-    transform: translateY(-12%);
-    opacity: 0;
-  }
-  18%,
-  82% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(560%);
-    opacity: 0;
-  }
-}
 .forge-meter {
   height: 5px;
   margin: 0 6px;
@@ -1637,36 +1605,44 @@ img {
   background: #8fd7b4;
   border-color: #c6f2dd;
 }
-/* 部品が1つずつ嵌まる。animation-fill-modeはbackwardsのみで、終了後は通常表示へ戻る。 */
+/* 生成中は、まず枠だけの空のカードを置き、工程が終わるたびに中身を1つずつ嵌める。
+   ff-* は main.js が「その工程が終わった」印として付ける。 */
 .card-shell.assembling .game-card {
-  animation: forge-snap 0.9s cubic-bezier(0.2, 0.8, 0.3, 1.35) backwards;
+  opacity: 0.45;
 }
 .card-shell.assembling .game-card > * {
-  animation: forge-part 0.93s cubic-bezier(0.16, 0.9, 0.3, 1.35) backwards;
+  opacity: 0;
 }
-.card-shell.assembling .photo-frame {
-  animation-delay: 0.15s;
+.card-shell.assembling.ff-1 .game-card {
+  animation: forge-frame-in 0.85s cubic-bezier(0.2, 0.8, 0.3, 1.35) forwards;
 }
-.card-shell.assembling .card-meta {
-  animation-delay: 0.53s;
+.card-shell.assembling.ff-2 .photo-frame {
+  animation: forge-part 0.7s cubic-bezier(0.16, 0.9, 0.3, 1.35) forwards;
 }
-.card-shell.assembling .card-heading {
-  animation-delay: 0.9s;
+.card-shell.assembling.ff-3 .card-meta {
+  animation: forge-part 0.7s cubic-bezier(0.16, 0.9, 0.3, 1.35) forwards;
 }
-.card-shell.assembling .card-primary-stats {
-  animation-delay: 1.43s;
+.card-shell.assembling.ff-4 .card-primary-stats {
+  animation: forge-part 0.7s cubic-bezier(0.16, 0.9, 0.3, 1.35) forwards;
 }
-.card-shell.assembling .card-mini-moves {
-  animation-delay: 1.95s;
+.card-shell.assembling.ff-5 .card-mini-moves {
+  animation: forge-part 0.7s cubic-bezier(0.16, 0.9, 0.3, 1.35) forwards;
 }
-.card-shell.assembling .card-footer {
-  animation-delay: 2.48s;
+.card-shell.assembling.ff-6 .card-heading,
+.card-shell.assembling.ff-6 .card-footer {
+  animation: forge-part 0.7s cubic-bezier(0.16, 0.9, 0.3, 1.35) forwards;
 }
-@keyframes forge-snap {
+.card-shell.assembling.ff-6 .card-heading {
+  animation-delay: 0.12s;
+}
+.card-shell.assembling.ff-6 .card-footer {
+  animation-delay: 0.3s;
+}
+@keyframes forge-frame-in {
   from {
-    opacity: 0.2;
-    transform: translateY(12px) scale(0.93);
-    filter: brightness(2.2) saturate(0.5);
+    opacity: 0.45;
+    transform: scale(0.965);
+    filter: brightness(2.1) saturate(0.5);
   }
   to {
     opacity: 1;

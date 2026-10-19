@@ -2,6 +2,10 @@ import { test, expect } from "@playwright/test";
 import { motionOff } from "./motion.js";
 
 const STEPS = ["frame", "photo", "features", "stats", "moves", "finish"];
+const partOpacity = (page, part) =>
+  page
+    .locator(`.game-card ${part}`)
+    .evaluate((el) => getComputedStyle(el).opacity);
 
 test("card generation plays an assembly scene and settles every part visible", async ({
   page,
@@ -13,6 +17,10 @@ test("card generation plays an assembly scene and settles every part visible", a
   // 解析中は組み立てシーンと進行状況が出る。
   await expect(page.locator("#forge-scene")).toBeVisible();
   await expect(page.locator("#forge-status-count")).toBeVisible();
+  // 最初は枠だけの空のカード。工程が進むにつれて中身が嵌まる。
+  await expect(page.locator("#card-shell")).toHaveClass(/assembling/);
+  expect(await partOpacity(page, ".card-mini-moves")).toBe("0");
+  expect(await partOpacity(page, ".card-footer")).toBe("0");
   // 解析が一瞬で終わっても、前半の工程を飛ばさずに見せてから組み立てる。
   await page.waitForTimeout(250);
   expect(await page.locator("#forge-step-number").textContent()).not.toBe("06");
@@ -34,10 +42,7 @@ test("card generation plays an assembly scene and settles every part visible", a
     ".card-mini-moves",
     ".card-footer",
   ]) {
-    const opacity = await page
-      .locator(`.game-card ${part}`)
-      .evaluate((el) => getComputedStyle(el).opacity);
-    expect(opacity).toBe("1");
+    expect(await partOpacity(page, part)).toBe("1");
   }
   await expect(page.locator("#card-primary-stats > div")).toHaveCount(10);
   await expect(page.locator("#card-mini-moves > span")).toHaveCount(4);

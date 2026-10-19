@@ -133,10 +133,11 @@ function forgeClear() {
   forgeTimers = [];
 }
 function forgeSceneStep(name, state) {
-  if (state === "done") {
-    const index = FORGE_STEPS.indexOf(name);
-    if (index >= 0) forgeCount = Math.max(forgeCount, index + 1);
+  const index = FORGE_STEPS.indexOf(name);
+  if (state === "done" && index >= 0) {
+    forgeCount = Math.max(forgeCount, index + 1);
     $("forge-step-number").textContent = String(forgeCount).padStart(2, "0");
+    forgeCardStep(index + 1);
   }
   const step = document.querySelector(`[data-forge-step="${name}"]`);
   if (!step) return;
@@ -146,6 +147,18 @@ function forgeSceneStep(name, state) {
 }
 function forgeMeter(percent) {
   $("forge-meter-fill").style.width = `${percent}%`;
+}
+// 生成中は空のカードから始め、工程が終わるたびに中身を1つずつ嵌める。
+// ff-N は N番目の工程が終わった印（style.css 側でそのパーツを出す）。
+function forgeCardStep(index) {
+  const shell = $("card-shell");
+  shell.classList.add("assembling");
+  shell.classList.add(`ff-${index}`);
+}
+function forgeCardReset() {
+  const shell = $("card-shell");
+  shell.classList.remove("assembling");
+  FORGE_STEPS.forEach((_, index) => shell.classList.remove(`ff-${index + 1}`));
 }
 function forgeBegin() {
   forgeClear();
@@ -160,7 +173,9 @@ function forgeBegin() {
     step.querySelector("i").textContent = "待機";
   });
   forgeMeter(0);
-  $("card-shell").classList.remove("assembling");
+  // 何も入っていない、枠だけのカードから始める。
+  forgeCardReset();
+  $("card-shell").classList.add("assembling");
   forgeShown = effects.motion && forgeVisible();
   if (!forgeShown) {
     $("forge-scene").hidden = true;
@@ -226,7 +241,6 @@ function forgeAssembleNow(run) {
   );
   forgeSceneStep("stats", "active");
   forgeMeter(66);
-  $("card-shell").classList.add("assembling");
   const at = (ms, action) =>
     forgeTimers.push(
       setTimeout(() => {
@@ -246,7 +260,7 @@ function forgeAssembleNow(run) {
     forgeMeter(100);
   });
   at(4200, () => {
-    $("card-shell").classList.remove("assembling");
+    forgeCardReset();
     scene.hidden = true;
     forgeMeter(0);
     forgeRunning = false;
@@ -257,7 +271,7 @@ function forgeCancel(run) {
   forgeClear();
   forgeRun += 1;
   forgeRunning = false;
-  $("card-shell").classList.remove("assembling");
+  forgeCardReset();
   $("forge-scene").hidden = true;
 }
 // 見えていなかった生成シーンは、作成タブを開いた時に見せ直す。
