@@ -1514,7 +1514,7 @@ img {
   display: flex;
   align-items: center;
   gap: 4px;
-  font: 10px/1.4 var(--display);
+  font: 20px/1.35 var(--display);
   letter-spacing: 1px;
   color: #8a6f80;
   /* 狭い画面ではカードの上に重なるので、下地なしでも読めるように影を敷く。 */
@@ -1522,13 +1522,20 @@ img {
   transition: color 0.2s;
 }
 .forge-steps b {
+  grid-area: 1 / 1;
   font-weight: 700;
   color: #c69a52;
 }
+.forge-steps li > span {
+  grid-area: 1 / 2;
+}
 .forge-steps i {
+  grid-area: 2 / 2;
+  justify-self: start;
   font-style: normal;
-  font-size: 9px;
-  padding: 1px 4px;
+  /* 工程名の文字に合わせて、状態バッジも一緒に大きくなる。 */
+  font-size: 0.9em;
+  padding: 1px 5px;
   border: 1px solid #ffffff22;
   border-radius: 2px;
   color: #7d6473;
@@ -1629,13 +1636,21 @@ img {
     grid-auto-flow: column;
     align-content: center;
     justify-content: space-between;
-    gap: 24px 0;
+    gap: 16px 0;
     margin: 0 2px;
   }
   .forge-steps li {
     position: relative;
     width: max-content;
     max-width: 100%;
+    /* 工程名を大きくしたぶん、状態バッジは名前の下へ回して幅を抑える。
+       こうしないと札がカードの端に食い込む。 */
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: start;
+    align-items: center;
+    column-gap: 6px;
+    row-gap: 3px;
   }
   .forge-steps li[data-state="done"] {
     animation: forge-join-left 0.95s cubic-bezier(0.45, 0, 0.55, 1) forwards;
@@ -1683,7 +1698,8 @@ img {
     gap: 3px 9px;
   }
   .forge-steps li {
-    font-size: 9px;
+    /* 狭い画面ではカードの上端に重なるので、2倍までは上げずに収める。 */
+    font-size: 16px;
   }
 }
 @media (min-width: 1600px) {

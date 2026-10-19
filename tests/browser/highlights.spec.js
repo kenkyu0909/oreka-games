@@ -30,7 +30,16 @@ test("legend import runs the real worker, shows a rare awakening and enters the 
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   const card = await createLegend(page, "05-jade-dragon");
-  await expect(page.locator("#rare-awakening")).toBeVisible();
+  // レア技の告知は、その技が組み込まれる「技を接続」の工程で出る。
+  await expect(page.locator("#rare-awakening")).toBeVisible({ timeout: 20000 });
+  await expect(page.locator('[data-forge-step="moves"]')).toHaveAttribute(
+    "data-state",
+    "done",
+  );
+  await expect(page.locator('[data-forge-step="finish"]')).not.toHaveAttribute(
+    "data-state",
+    "done",
+  );
   await expect(page.locator("#rare-awakening strong")).toHaveText("天穹断裂");
   expect(
     await page

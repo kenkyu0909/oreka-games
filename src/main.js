@@ -8,7 +8,11 @@ import { createSample } from "./sample.js";
 import { exportCard } from "./export.js";
 import { effects } from "./effects.js";
 import { initMobileGuide } from "./mobile.js";
-import { awakenRareCard, clearAwakening } from "./spectacle.js";
+import {
+  AWAKENING_MS,
+  awakenRareCard,
+  clearAwakening,
+} from "./spectacle.js";
 
 initMobileGuide();
 
@@ -113,11 +117,26 @@ async function previewFromResult(result) {
 
 // カード生成シーン。解析中は「鋳造→量子化→特徴抽出」を進め、
 // カードが届いたら「能力→技→輝き」を刻みながら部品を1つずつ組み上げる。
-// 演出オフ・端末の動きを減らす設定では何もしない（通常表示のまま）。
+// 演出は常時オン。検証やテストで静かに進めたい時だけ motionOff で止める。
 const FORGE_STEPS = ["frame", "photo", "features", "stats", "moves", "finish"];
-// 解析が一瞬で終わっても、前半の工程を必ず見せてから組み立てへ移る。
-// 速すぎると何が起きたか分からないので、6工程を一通り目で追える長さにする。
-const FORGE_LEAD_IN = 3300;
+// 1工程ぶんのリズム。生成中（FORGE_STEP_MS）→ 完了＝カードへ吸い込まれる
+// （FORGE_JOIN_MS、style.css の forge-join-left/right と同じ長さ）→ 少し間を
+// 置いて（FORGE_GAP_MS）次の工程へ。間を空けないと、どれが終わって次が
+// 始まったのかを目で追えない。
+const FORGE_STEP_MS = 650;
+const FORGE_JOIN_MS = 950;
+const FORGE_GAP_MS = 400;
+const FORGE_NEXT_MS = FORGE_JOIN_MS + FORGE_GAP_MS;
+const FORGE_RHYTHM_MS = FORGE_STEP_MS + FORGE_NEXT_MS;
+// 解析が一瞬で終わっても、前半3工程（鋳造→量子化→特徴抽出）は必ず見せてから
+// 組み立てへ移る。速すぎると何が起きたか分からない。
+const FORGE_LEAD_IN = FORGE_STEP_MS * 3 + FORGE_NEXT_MS * 2;
+// 「技を接続」でレア技が乗った時は、その告知が終わるまで最後の工程を待たせる。
+// 告知は画面を覆うので、重ねると「輝きを決定」の工程が見えなくなる。
+const FORGE_RARE_HOLD_MS = Math.max(0, AWAKENING_MS - FORGE_NEXT_MS);
+// 今回の生成について、組み上がってから出すもの（仕上げの音・加工名・案内文）。
+// 空のカードに結果だけ先に見えるのを避けるため、ここに溜めておく。
+let forgeCard = null;
 // 生成シーンは作成タブの中にある。ホームなど別のタブを見ている間に再生しても
 // 誰にも見えないので、その場合は演出だけ後回しにして、作成タブを開いた時に見せる。
 const forgeVisible = () => document.body.dataset.view === "creator";
@@ -131,6 +150,13 @@ function forgeClear() {
   forgeTimers.forEach(clearTimeout);
   forgeTimers = [];
 }
+// 途中で作り直された時のために、いまの生成のタイマーだけを動かす。
+const forgeScheduler = (run) => (ms, action) =>
+  forgeTimers.push(
+    setTimeout(() => {
+      if (run === forgeRun) action();
+    }, ms),
+  );
 function forgeSceneStep(name, state) {
   const index = FORGE_STEPS.indexOf(name);
   if (state === "done" && index >= 0) forgeCardStep(index + 1);
@@ -165,6 +191,9 @@ function forgeBegin() {
   // 何も入っていない、枠だけのカードから始める。
   forgeCardReset();
   $("card-shell").classList.add("assembling");
+  // 前のカードの結果（加工名や案内文）は、このカードのものではないので戻す。
+  $("finish-name").textContent = "—";
+  $("stage-caption").textContent = "能力は写真から。輝きは、運から。";
   forgeShown = effects.motion && forgeVisible();
   if (!forgeShown) {
     $("forge-scene").hidden = true;
@@ -173,30 +202,27 @@ function forgeBegin() {
   forgePlay(run);
   return run;
 }
-// 前半の工程を刻みながらシーンを出す。
+// 前半の工程を刻みながらシーンを出す。1工程ずつ、終わって間を置いてから次へ。
 function forgePlay(run) {
   const scene = $("forge-scene");
   scene.hidden = false;
-  const at = (ms, action) =>
-    forgeTimers.push(
-      setTimeout(() => {
-        if (run === forgeRun) action();
-      }, ms),
-    );
+  const at = forgeScheduler(run);
   forgeSceneStep("frame", "active");
-  at(840, () => {
-    forgeSceneStep("frame", "done");
-    forgeSceneStep("photo", "active");
-  });
-  at(2100, () => {
-    forgeSceneStep("photo", "done");
-    forgeSceneStep("features", "active");
-  });
+  at(FORGE_STEP_MS, () => forgeSceneStep("frame", "done"));
+  at(FORGE_STEP_MS + FORGE_NEXT_MS, () => forgeSceneStep("photo", "active"));
+  at(FORGE_STEP_MS * 2 + FORGE_NEXT_MS, () =>
+    forgeSceneStep("photo", "done"),
+  );
+  at(FORGE_LEAD_IN - FORGE_STEP_MS, () =>
+    forgeSceneStep("features", "active"),
+  );
 }
 function forgeAssemble(run) {
   if (run !== forgeRun) return;
   if (!effects.motion) {
+    // 演出なしの時は、シーンを挟まずその場で結果まで出す。
     forgeCancel(run);
+    forgeComplete();
     return;
   }
   // 見えていない間に出来上がった場合は、その場では再生せず、
@@ -226,29 +252,46 @@ function forgeAssembleNow(run) {
   ["frame", "photo", "features"].forEach((name) =>
     forgeSceneStep(name, "done"),
   );
-  forgeSceneStep("stats", "active");
-  const at = (ms, action) =>
-    forgeTimers.push(
-      setTimeout(() => {
-        if (run === forgeRun) action();
-      }, ms),
-    );
-  at(930, () => {
-    forgeSceneStep("stats", "done");
-    forgeSceneStep("moves", "active");
-  });
-  at(1860, () => {
-    forgeSceneStep("moves", "done");
-    forgeSceneStep("finish", "active");
-  });
-  at(2790, () => {
-    forgeSceneStep("finish", "done");
-  });
-  at(4200, () => {
+  const at = forgeScheduler(run);
+  // 能力→技→輝きの順に、1工程ずつ間を空けて刻む。
+  let elapsed = 0;
+  for (const name of ["stats", "moves", "finish"]) {
+    at(elapsed, () => forgeSceneStep(name, "active"));
+    at(elapsed + FORGE_STEP_MS, () => {
+      forgeSceneStep(name, "done");
+      // レア技の告知は、その技が乗る「技を接続」の工程で出す。
+      if (name === "moves") forgeAnnounceRare();
+    });
+    elapsed += FORGE_RHYTHM_MS;
+    // 告知が画面を覆っている間は、最後の工程を待たせる。
+    if (name === "moves" && forgeCard?.rare) elapsed += FORGE_RARE_HOLD_MS;
+  }
+  at(elapsed, () => {
     forgeCardReset();
     scene.hidden = true;
     forgeRunning = false;
+    forgeComplete();
   });
+}
+// レア技が乗ったカードは、その技が組み込まれる工程で告知を出す。生成が
+// 終わってから出すと、どの技の話だったのか分からなくなる。
+function forgeAnnounceRare() {
+  if (!forgeCard?.rare) return;
+  forgeCard.announced = true;
+  effects.play("rare-reveal");
+  awakenRareCard(forgeCard.character);
+}
+// カードが組み上がった瞬間に出すもの（仕上げの音・加工名・案内文）。工程の
+// 途中で出すと、まだ空のカードに結果だけが先に見えてしまう。
+function forgeComplete() {
+  const info = forgeCard;
+  if (!info) return;
+  forgeCard = null;
+  effects.play(info.rare && !info.announced ? "rare-reveal" : "reveal");
+  $("finish-name").textContent = info.finish.label;
+  $("stage-caption").textContent =
+    `${info.finish.label} · 輝きは能力に影響しません`;
+  status(info.message);
 }
 function forgeCancel(run) {
   if (run !== undefined && run !== forgeRun) return;
@@ -264,6 +307,7 @@ document.addEventListener("reframe-view", (event) => {
   // 見えていない間に出来上がっていた分は、最初から再生する。
   if (forgePending) {
     forgePending = false;
+    status("写真の解析が終わりました。カードを組み立てています。");
     forgeAssemble(forgeBegin());
     return;
   }
@@ -354,29 +398,34 @@ async function loadPhoto(file, sampleName = null) {
       .join("");
     $("card-shell").classList.remove("revealing");
     void $("card-shell").offsetWidth;
-    if (effects.motion) $("card-shell").classList.add("revealing");
-    if (document.body.dataset.view === "creator") {
-      const rare = character.moves.find((m) => m.rarity === "rare");
-      effects.play(rare ? "rare-reveal" : "reveal");
-      awakenRareCard(character);
-    }
+    // 組み立てシーンが見えている間は、シーン側の ff-* が部品を嵌めていく。
+    // カード全体を回して見せるアニメーションを重ねると、途中でカードが
+    // ひとりでに回り出すので、シーンが無い時だけ出す。
+    if (effects.motion && !forgeShown)
+      $("card-shell").classList.add("revealing");
     $("finish-label").textContent = finish.short;
-    $("finish-name").textContent = finish.label;
     $("rule-label").textContent = character.version.toUpperCase();
-    $("stage-caption").textContent =
-      `${finish.label} · 輝きは能力に影響しません`;
     renderDetails(current);
+    const rare = character.moves.find((move) => move.rarity === "rare");
+    // 加工名・案内文・レア技の告知は、対応する工程で出す。組み上がる前に
+    // 結果だけが見えると、何が起きたのか分からなくなる。
+    forgeCard = {
+      character,
+      finish,
+      rare,
+      message:
+        (sampleName
+          ? "サンプルはオリジナルの図形イラストです。自分の写真でも試してみよう。"
+          : "カードができました。元の写真は、再生成のために残しておいてください。") +
+        (rare ? ` ★ レア技：${rare.name}` : ""),
+    };
+    // 解析が終わってからカードが組み上がるまでの間も、案内文を工程に合わせる。
+    if (forgeShown) status("写真の解析が終わりました。カードを組み立てています。");
     forgeAssemble(forge);
     document.dispatchEvent(new CustomEvent("oreka-card-ready"));
-    const rare = character.moves.find((m) => m.rarity === "rare");
-    status(
-      (sampleName
-        ? "サンプルはオリジナルの図形イラストです。自分の写真でも試してみよう。"
-        : "カードができました。元の写真は、再生成のために残しておいてください。") +
-        (rare ? ` ★ レア技：${rare.name}` : ""),
-    );
     return true;
   } catch (error) {
+    forgeCard = null;
     forgeCancel(forge);
     status(
       error.message ||

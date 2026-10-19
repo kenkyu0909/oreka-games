@@ -28,7 +28,7 @@ test("card generation plays an assembly scene and settles every part visible", a
     "done",
   );
   // 完了するとシーンは引っ込み、手順はすべて完了になる。
-  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 15000 });
+  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 20000 });
   for (const name of STEPS)
     await expect(page.locator(`[data-forge-step="${name}"]`)).toHaveAttribute(
       "data-state",
@@ -66,7 +66,7 @@ test("opening the app on home and then the creator still plays the scene", async
     "data-state",
     "done",
   );
-  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 15000 });
+  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 20000 });
   for (const name of STEPS)
     await expect(page.locator(`[data-forge-step="${name}"]`)).toHaveAttribute(
       "data-state",
@@ -87,7 +87,7 @@ test("opening the creator while the first sample is still being made still plays
   // 最初のサンプル生成が終わる前に作成タブへ移っても、シーンは見せる。
   await page.locator('.view-nav [data-view="creator"]').click();
   await expect(page.locator("#forge-scene")).toBeVisible({ timeout: 15000 });
-  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 18000 });
+  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 22000 });
   await expect(page.locator('[data-forge-step="finish"]')).toHaveAttribute(
     "data-state",
     "done",
@@ -105,7 +105,7 @@ test("the device asking for reduced motion no longer hides the scene", async ({
   await expect(page.locator("body")).toHaveAttribute("data-motion", "on");
   await page.locator("#sample-button").click();
   await expect(page.locator("#forge-scene")).toBeVisible();
-  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 15000 });
+  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 20000 });
 });
 
 test("motion off skips the assembly scene and shows the card immediately", async ({

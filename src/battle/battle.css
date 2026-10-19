@@ -756,6 +756,13 @@
   color: #75536d;
   font-size: 8px;
 }
+/* 対戦中に、相手と自分のレベルが分かるようにする。 */
+.fighter-top .fighter-level {
+  margin-left: 5px;
+  font: 700 10px var(--display);
+  letter-spacing: 1px;
+  color: #dcae63;
+}
 .fighter-top > span:last-child {
   font-size: 8px;
   color: #957087;
@@ -2354,6 +2361,10 @@
   }
   .fighter-top i {
     font-size: 7px;
+  }
+  .fighter-top .fighter-level {
+    font-size: 9px;
+    margin-left: 3px;
   }
   .fighter-hp {
     margin: 5px 0 4px;
@@ -4109,6 +4120,10 @@ body[data-motion="off"] .arena-stage * {
   }
   .arena-stage .fighter-top > span:first-child {
     font-size: 8px;
+  }
+  .arena-stage .fighter-top .fighter-level {
+    font-size: 8px;
+    margin-left: 3px;
   }
   .arena-stage .fighter-hp b {
     font-size: 23px;
