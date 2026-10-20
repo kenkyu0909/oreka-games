@@ -1,8 +1,9 @@
 import "./style.css";
 import "./card-frame.css";
 import { initBattleUI } from "./battle/ui.js";
-import { ATTRIBUTES, STATS, FEATURES, drawFinish } from "./game.js";
+import { ATTRIBUTES, STATS, FEATURES, drawFinish, characterForCard } from "./game.js";
 import { moveTags } from "./moves.js";
+import { specialCardById } from "./special-cards.js";
 import { MAX_BYTES } from "./limits.js";
 import { createSample } from "./sample.js";
 import { exportCard } from "./export.js";
@@ -68,6 +69,22 @@ function runAnalysis(buffer) {
   });
 }
 
+function renderCardMoves(character) {
+  $("card-mini-moves").innerHTML = character.moves
+    .map(
+      (move) =>
+        `<span class="${move.rarity === "rare" ? "rare-card-move" : ""}${move.special ? " special-card-move" : ""}">${move.rarity === "rare" ? "★ " : move.special ? "◆ " : ""}${move.name}<small>PP ${move.pp}</small></span>`,
+    )
+    .join("");
+}
+// 特殊カードは名前で決まる。カードの見た目にもそれが分かる印を出す。
+function renderSpecialMark(character) {
+  const special = character.special ? specialCardById(character.special) : null;
+  $("game-card").classList.toggle("is-special", !!special);
+  $("card-type").textContent = special
+    ? `特殊カード / ${special.cutin.move}`
+    : "同じ一枚から、変わらない個性。";
+}
 function renderDetails(result) {
   const { character, fingerprint, sourceWidth, sourceHeight } = result;
   $("stats-grid").innerHTML = STATS.map(
@@ -77,7 +94,7 @@ function renderDetails(result) {
   $("moves-list").innerHTML = character.moves
     .map(
       (move) => `
-    <article class="move-item ${move.rarity === "rare" ? "rare-move" : ""}"><div class="move-heading">${move.rarity === "rare" ? '<span class="rare-badge">レア</span>' : ""}<h3>${move.name}</h3><span class="move-category">${move.attribute ? ATTRIBUTES[move.attribute].label + " / " : ""}${move.category}</span><span class="move-pp">PP ${move.pp} / ${move.pp}</span></div><p><b>${moveTags(move).join(" / ")}</b> — ${move.text}</p><div class="move-values"><span>威力 <b>${move.power ?? "—"}${move.hits ? ` × ${move.hits}回` : ""}</b></span><span>命中 <b>${move.accuracy}%</b></span></div></article>`,
+    <article class="move-item ${move.rarity === "rare" ? "rare-move" : ""}${move.special ? " special-move" : ""}"><div class="move-heading">${move.rarity === "rare" ? '<span class="rare-badge">レア</span>' : ""}${move.special ? '<span class="special-badge">特殊</span>' : ""}<h3>${move.name}</h3><span class="move-category">${move.attribute ? ATTRIBUTES[move.attribute].label + " / " : ""}${move.category}</span><span class="move-pp">PP ${move.pp} / ${move.pp}</span></div><p><b>${moveTags(move).join(" / ")}</b> — ${move.text}</p><div class="move-values"><span>威力 <b>${move.power ?? "—"}${move.hits ? ` × ${move.hits}回` : ""}</b></span><span>命中 <b>${move.accuracy}%</b></span></div></article>`,
     )
     .join("");
   $("analysis-list").innerHTML =
@@ -165,6 +182,47 @@ function forgeSceneStep(name, state) {
   step.dataset.state = state;
   step.querySelector("i").textContent =
     state === "done" ? "完了" : state === "active" ? "生成中" : "待機";
+  forgeHud(name, state);
+  if (state === "done") forgeSpark();
+}
+// 狭い画面では工程リストの代わりに、カード下のHUDで今の工程を示す。
+// 文字をカードに重ねないため、状態はHUD側にだけ出す。
+function forgeHud(name, state) {
+  const hud = $("forge-hud");
+  if (!hud) return;
+  const index = FORGE_STEPS.indexOf(name);
+  if (index >= 0) {
+    $("forge-hud-index").textContent = String(index + 1).padStart(2, "0");
+    $("forge-hud-name").textContent =
+      document.querySelector(`[data-forge-step="${name}"] span`)
+        ?.textContent ?? "";
+  }
+  hud.dataset.state = state;
+  $("forge-hud-state").textContent =
+    state === "done" ? "完了" : state === "active" ? "生成中" : "待機";
+  const track = $("forge-hud-track");
+  if (!track) return;
+  document.querySelectorAll("[data-forge-step]").forEach((step, i) => {
+    const segment = track.children[i];
+    if (segment) segment.dataset.state = step.dataset.state || "idle";
+  });
+}
+// 工程が終わった時、HUDからカードへ吸い込まれる光を飛ばす。
+function forgeSpark() {
+  const stage = document.querySelector(".card-stage");
+  const hud = $("forge-hud");
+  // 広い画面ではHUDを出していない（工程はカードの左右）ので、光も飛ばさない。
+  if (!stage || !hud || getComputedStyle(hud).display === "none") return;
+  for (let i = 0; i < 3; i += 1) {
+    const spark = document.createElement("i");
+    spark.className = "forge-spark";
+    spark.style.setProperty("--dx", `${(i - 1) * 16}px`);
+    spark.style.animationDelay = `${i * 70}ms`;
+    stage.append(spark);
+    spark.addEventListener("animationend", () => spark.remove(), {
+      once: true,
+    });
+  }
 }
 // 生成中は空のカードから始め、工程が終わるたびに中身を1つずつ嵌める。
 // ff-N は N番目の工程が終わった印（style.css 側でそのパーツを出す）。
@@ -188,6 +246,7 @@ function forgeBegin() {
     step.dataset.state = "idle";
     step.querySelector("i").textContent = "待機";
   });
+  forgeHud(FORGE_STEPS[0], "idle");
   // 何も入っていない、枠だけのカードから始める。
   forgeCardReset();
   $("card-shell").classList.add("assembling");
@@ -197,6 +256,7 @@ function forgeBegin() {
   forgeShown = effects.motion && forgeVisible();
   if (!forgeShown) {
     $("forge-scene").hidden = true;
+    $("forge-hud").hidden = true;
     return run;
   }
   forgePlay(run);
@@ -206,6 +266,7 @@ function forgeBegin() {
 function forgePlay(run) {
   const scene = $("forge-scene");
   scene.hidden = false;
+  $("forge-hud").hidden = false;
   const at = forgeScheduler(run);
   forgeSceneStep("frame", "active");
   at(FORGE_STEP_MS, () => forgeSceneStep("frame", "done"));
@@ -269,6 +330,7 @@ function forgeAssembleNow(run) {
   at(elapsed, () => {
     forgeCardReset();
     scene.hidden = true;
+    $("forge-hud").hidden = true;
     forgeRunning = false;
     forgeComplete();
   });
@@ -300,6 +362,7 @@ function forgeCancel(run) {
   forgeRunning = false;
   forgeCardReset();
   $("forge-scene").hidden = true;
+  $("forge-hud").hidden = true;
 }
 // 見えていなかった生成シーンは、作成タブを開いた時に見せ直す。
 document.addEventListener("reframe-view", (event) => {
@@ -352,6 +415,13 @@ async function loadPhoto(file, sampleName = null) {
     const previousUrl = previewUrl;
     previewUrl = url;
     current = { ...result, image, finish, name };
+    // 特殊カードは名前で技が決まる。名前は生成後に変えられるので、
+    // 変更時にも同じ関数で作り直せるよう、ここで名前から能力を組み立てる。
+    current.character = characterForCard(
+      name,
+      result.character.features,
+      result.character.version,
+    );
     delete current.preview;
     const { character, fingerprint } = current;
     const attr = ATTRIBUTES[character.attribute];
@@ -373,7 +443,7 @@ async function loadPhoto(file, sampleName = null) {
     $("card-level").textContent =
       `LEVEL ${String(character.level).padStart(2, "0")} / 12`;
     $("card-attribute").textContent = `${attr.name} / ${attr.label}属性`;
-    $("card-type").textContent = "同じ一枚から、変わらない個性。";
+    renderSpecialMark(character);
     const abbreviations = [
       "HP",
       "ATK",
@@ -390,12 +460,7 @@ async function loadPhoto(file, sampleName = null) {
       ([key], i) =>
         `<div><small>${abbreviations[i]}</small><b>${character.stats[key]}</b></div>`,
     ).join("");
-    $("card-mini-moves").innerHTML = character.moves
-      .map(
-        (move) =>
-          `<span class="${move.rarity === "rare" ? "rare-card-move" : ""}">${move.rarity === "rare" ? "★ " : ""}${move.name}<small>PP ${move.pp}</small></span>`,
-      )
-      .join("");
+    renderCardMoves(character);
     $("card-shell").classList.remove("revealing");
     void $("card-shell").offsetWidth;
     // 組み立てシーンが見えている間は、シーン側の ff-* が部品を嵌めていく。
@@ -407,6 +472,7 @@ async function loadPhoto(file, sampleName = null) {
     $("rule-label").textContent = character.version.toUpperCase();
     renderDetails(current);
     const rare = character.moves.find((move) => move.rarity === "rare");
+    const special = character.special ? specialCardById(character.special) : null;
     // 加工名・案内文・レア技の告知は、対応する工程で出す。組み上がる前に
     // 結果だけが見えると、何が起きたのか分からなくなる。
     forgeCard = {
@@ -417,7 +483,8 @@ async function loadPhoto(file, sampleName = null) {
         (sampleName
           ? "サンプルはオリジナルの図形イラストです。自分の写真でも試してみよう。"
           : "カードができました。元の写真は、再生成のために残しておいてください。") +
-        (rare ? ` ★ レア技：${rare.name}` : ""),
+        (rare ? ` ★ レア技：${rare.name}` : "") +
+        (special ? ` ◆ 特殊カード：${special.move.name}` : ""),
     };
     // 解析が終わってからカードが組み上がるまでの間も、案内文を工程に合わせる。
     if (forgeShown) status("写真の解析が終わりました。カードを組み立てています。");
@@ -486,7 +553,20 @@ $("sample-button").addEventListener("click", showSample);
 $("name-input").addEventListener("input", () => {
   const name = $("name-input").value.trim() || "名前のない切り札";
   $("card-name").textContent = name;
-  if (current) current.name = name;
+  if (!current) return;
+  current.name = name;
+  // 名前が特殊カードに変わった（戻った）時は、技と印をその場で組み直す。
+  const next = characterForCard(
+    name,
+    current.character.features,
+    current.character.version,
+  );
+  if ((next.special || null) === (current.character.special || null)) return;
+  current.character = next;
+  renderCardMoves(current.character);
+  renderSpecialMark(current.character);
+  renderDetails(current);
+  effects.play(next.special ? "rare-reveal" : "ui");
 });
 $("download-button").addEventListener("click", async () => {
   if (!current || processing || exporting) return;

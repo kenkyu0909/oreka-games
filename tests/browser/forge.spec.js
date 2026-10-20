@@ -126,3 +126,48 @@ test("motion off skips the assembly scene and shows the card immediately", async
     .evaluate((el) => getComputedStyle(el).opacity);
   expect(opacity).toBe("1");
 });
+
+test.describe("narrow screen", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test("shows the step HUD under the card instead of text over it", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/#creator");
+    await expect(page.locator("#download-button")).toBeEnabled();
+    await page.locator("#sample-button").click();
+    // 狭い画面では左右の工程リストをやめ、カード下のHUDに畳む。
+    await expect(page.locator("#forge-hud")).toBeVisible();
+    await expect(page.locator("#forge-steps")).toBeHidden();
+    const boxes = await page.evaluate(() => {
+      const hud = document.getElementById("forge-hud").getBoundingClientRect();
+      const card = document.getElementById("card-shell").getBoundingClientRect();
+      return { hudTop: hud.top, cardBottom: card.bottom, hudWidth: hud.width };
+    });
+    // 工程の文字がカードに重ならない。
+    expect(boxes.hudTop).toBeGreaterThanOrEqual(boxes.cardBottom - 1);
+    // ステージ幅いっぱいに広がり、横スクロールも出さない。
+    expect(boxes.hudWidth).toBeGreaterThan(300);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      ),
+    ).toBe(0);
+    // 工程が進むとHUDの番号・状態・進捗も追従する。
+    await expect(page.locator("#forge-hud-index")).toHaveText(/0[2-6]/);
+    await expect(page.locator("#forge-hud-state")).not.toHaveText("待機");
+    await expect
+      .poll(() =>
+        page.locator('#forge-hud-track span[data-state="active"]').count(),
+      )
+      .toBe(1);
+    await expect
+      .poll(() =>
+        page.locator('#forge-hud-track span[data-state="done"]').count(),
+      )
+      .toBeGreaterThanOrEqual(2);
+    await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 20000 });
+    await expect(page.locator("#forge-hud")).toBeHidden();
+  });
+});
