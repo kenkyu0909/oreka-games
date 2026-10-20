@@ -31,6 +31,9 @@ const MIME = {
   ".json": "application/json",
   ".woff2": "font/woff2",
   ".woff": "font/woff",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".ogg": "audio/ogg",
 };
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const ROOM_TTL = 10 * 60_000;

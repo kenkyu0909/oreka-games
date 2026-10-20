@@ -109,6 +109,25 @@ export function chooseCpuAction(
       );
       const plain = estimateMoveDamage(mine, opponent, move),
         crit = estimateMoveDamage(mine, opponent, move, true);
+      if (move.destroy) {
+        // 破壊は直接ダメージこそ出ないが、相手の場を空にし、破壊した能力を
+        // 自分の攻撃・特攻に足す。控えを失う重さも引いて評価する。
+        const bench = state.teams[side].filter(
+          (f, i) => i !== state.active[side] && f.hp > 0,
+        );
+        const stats = (f) =>
+          f.card.character.stats.attack + f.card.character.stats.specialAttack;
+        const gain =
+          bench.reduce((sum, f) => sum + stats(f), 0) + stats(opponent);
+        const remaining =
+          state.teams[1 - side].filter((f) => f.hp > 0).length - 1;
+        return (
+          opponent.hp * 0.6 +
+          gain * 0.35 -
+          bench.length * 22 +
+          (remaining ? 0 : 400)
+        );
+      }
       let value =
         (Math.min(opponent.hp, plain * (1 - chance) + crit * chance) *
           move.accuracy) /

@@ -1,5 +1,5 @@
 import {
-  generateCharacter,
+  characterForCard,
   SUPPORTED_RULE_VERSIONS,
   FINISHES,
 } from "../game.js";
@@ -59,7 +59,8 @@ export function normalizeTeam(input) {
       fingerprint: card.fingerprint,
       finish: FINISHES.find((f) => f.id === card.finish?.id) || FINISHES[0],
       // Never trust stats or arbitrary move definitions sent by a peer.
-      character: generateCharacter(features, card.character.version),
+      // 特殊カードは名前で技が決まるので、名前から作り直す。
+      character: characterForCard(name, features, card.character.version),
     };
   });
 }

@@ -1,4 +1,4 @@
-import { generateCharacter, RULE_VERSION } from "./game.js";
+import { characterForCard, RULE_VERSION } from "./game.js";
 import { MAX_BYTES } from "./limits.js";
 export function validateVault(data) {
   if (
@@ -50,7 +50,7 @@ export function validateVault(data) {
     )
       throw new Error("図鑑の画像情報が不正です。");
     ids.add(card.id);
-    const actual = generateCharacter(card.character.features, data.rule);
+    const actual = characterForCard(card.name, card.character.features, data.rule);
     if (
       JSON.stringify(actual) !== JSON.stringify(card.character) ||
       card.attribute !== actual.attribute

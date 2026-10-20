@@ -14,6 +14,19 @@ const motionOn = stored.motionOff !== true;
 let soundEnabled = stored.sound === true;
 let context;
 let lastSound = 0;
+// 音声ファイルは初回だけ読み込み、デコード結果を使い回す。
+const voiceBase = import.meta.env?.BASE_URL || "/";
+const voiceCache = new Map();
+let voiceSource = null;
+async function loadVoice(ctx, path) {
+  const cached = voiceCache.get(path);
+  if (cached) return cached;
+  const response = await fetch(`${voiceBase}${path}`);
+  if (!response.ok) return null;
+  const buffer = await ctx.decodeAudioData(await response.arrayBuffer());
+  voiceCache.set(path, buffer);
+  return buffer;
+}
 function save() {
   try {
     localStorage.setItem(
@@ -107,6 +120,40 @@ export const effects = {
   },
   get sound() {
     return soundEnabled;
+  },
+  // 登録した音声ファイル（特殊カードの登場ボイスなど）。効果音と同じく
+  // ♪トグルに従い、AudioContext で鳴らすので端末の音量設定もそのまま効く。
+  voice(path, volume = 0.85) {
+    if (!soundEnabled || document.hidden || !path) return;
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive)
+      return;
+    const ctx = audio();
+    if (!ctx) return;
+    loadVoice(ctx, path)
+      .then((buffer) => {
+        if (!buffer || !soundEnabled) return;
+        try {
+          voiceSource?.stop();
+        } catch {
+          /* already ended */
+        }
+        const source = ctx.createBufferSource(),
+          gain = ctx.createGain();
+        source.buffer = buffer;
+        gain.gain.value = volume;
+        source.connect(gain);
+        gain.connect(ctx.destination);
+        source.start();
+        voiceSource = source;
+        source.onended = () => {
+          if (voiceSource === source) voiceSource = null;
+          source.disconnect();
+          gain.disconnect();
+        };
+      })
+      .catch(() => {
+        /* 音声が無くてもカットインは続ける */
+      });
   },
   play(kind) {
     if (!soundEnabled || document.hidden || performance.now() - lastSound < 65)

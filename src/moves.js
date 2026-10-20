@@ -504,7 +504,10 @@ export const MOVE_LIBRARY = freeze(entries);
 export function moveTags(move) {
   const tags = [];
   if (move.rarity === "rare") tags.push("レア");
-  if (move.priority) tags.push("先制");
+  if (move.special) tags.push("特殊");
+  if (move.priority > 0) tags.push("先制");
+  if (move.priority < 0) tags.push("後攻");
+  if (move.destroy) tags.push("破壊");
   if (move.hits) tags.push(`${move.hits}連撃`);
   if (move.drain) tags.push("吸収");
   if (move.recoil) tags.push("反動");

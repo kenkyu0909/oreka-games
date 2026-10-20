@@ -295,6 +295,19 @@
               <div class="stage-caption">
                 <span id="stage-caption">能力は写真から。輝きは、運から。</span>
               </div>
+              <!-- 狭い画面用の工程HUD。カードの下に敷いて、文字をカードに重ねない。 -->
+              <div class="forge-hud" id="forge-hud" hidden aria-hidden="true">
+                <div class="forge-hud-head">
+                  <b class="forge-hud-index" id="forge-hud-index">01</b>
+                  <small class="forge-hud-total">/ 06</small>
+                  <strong class="forge-hud-name" id="forge-hud-name">外枠を鋳造</strong>
+                  <i class="forge-hud-state" id="forge-hud-state">待機</i>
+                </div>
+                <div class="forge-hud-track" id="forge-hud-track">
+                  <span></span><span></span><span></span><span></span
+                  ><span></span><span></span>
+                </div>
+              </div>
               <button id="creator-details-button" class="outline-button">
                 能力・技・写真の解析を見る <span>＋</span>
               </button>
@@ -334,6 +347,28 @@
           aria-label="編成と対戦画面"
           hidden
         ></section>
+        <div
+          id="battle-cutin"
+          class="battle-cutin"
+          hidden
+          aria-hidden="true"
+        >
+          <div class="cutin-slab">
+            <div class="cutin-art"><img alt="" /></div>
+            <div class="cutin-copy">
+              <small class="cutin-eyebrow"></small>
+              <strong class="cutin-name"></strong>
+              <span class="cutin-move"></span>
+              <p class="cutin-line"></p>
+            </div>
+            <b class="cutin-sigil" aria-hidden="true"></b>
+          </div>
+          <div class="cutin-shards">
+            <i style="--i: 0"></i><i style="--i: 1"></i><i style="--i: 2"></i
+            ><i style="--i: 3"></i><i style="--i: 4"></i><i style="--i: 5"></i
+            ><i style="--i: 6"></i><i style="--i: 7"></i>
+          </div>
+        </div>
       </main>
       <footer class="site-footer">
         <span><i></i> PRIVATE PHOTO CARD DUEL</span>

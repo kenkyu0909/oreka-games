@@ -1,5 +1,6 @@
 import { assignMovesV2 } from "./moves.js";
 import { assignMovesV3 } from "./rare-moves.js";
+import { specialCardFor, withSpecialMove } from "./special-cards.js";
 
 // Generation rules are deliberately independent from cosmetic randomness.
 export const RULE_VERSION = "photo-v3";
@@ -249,12 +250,27 @@ export function drawFinish(randomValue) {
 }
 
 export function movesForCharacter(character) {
-  return character.version === LEGACY_RULE_VERSION
-    ? assignMoves(character.attribute, character.stats, character.level)
-    : (character.version === "photo-v2" ? assignMovesV2 : assignMovesV3)(
-        character.attribute,
-        character.stats,
-        character.level,
-        character.features,
-      );
+  const moves =
+    character.version === LEGACY_RULE_VERSION
+      ? assignMoves(character.attribute, character.stats, character.level)
+      : (character.version === "photo-v2" ? assignMovesV2 : assignMovesV3)(
+          character.attribute,
+          character.stats,
+          character.level,
+          character.features,
+        );
+  // 特殊カードは写真から決まる3技に、名前で固定された切り札を1つ足す。
+  return character.special ? withSpecialMove(character.special, moves) : moves;
+}
+
+// カード名から能力を作り直す。名前が特殊カードでなければ通常の生成結果を返す。
+export function characterForCard(name, features, version = RULE_VERSION) {
+  const character = generateCharacter(features, version);
+  const special = specialCardFor(name);
+  if (!special) return character;
+  return {
+    ...character,
+    special: special.id,
+    moves: withSpecialMove(special.id, character.moves),
+  };
 }

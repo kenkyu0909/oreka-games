@@ -14,6 +14,7 @@ import { RoomConnection, savedSession } from "./network.js";
 import { wireTeam } from "./protocol.js";
 import { effects } from "../effects.js";
 import { isFinalKnockout } from "./highlights.js";
+import { announceArrival, clearCardCutIn } from "./cutin.js";
 import {
   renderLobby,
   renderBattle,
@@ -117,6 +118,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
     if (view !== "battle") {
       stopAuto();
       skipTransition();
+      clearCardCutIn();
     }
     model.sheet = null;
     model.confirm = null;
@@ -192,6 +194,7 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
   }
   function resetBattle() {
     skipTransition();
+    clearCardCutIn();
     model.sheet = null;
     model.command = "moves";
     model.latest = "";
@@ -340,7 +343,9 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
         continue;
       }
       const priorHp =
-        entry.kind === "damage" || entry.kind === "heal"
+        entry.kind === "damage" ||
+        entry.kind === "heal" ||
+        entry.kind === "destroy"
           ? model.presentation.teams[entry.side][entry.index].hp
           : null;
       model.effect = entry.kind
@@ -354,14 +359,20 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
           kind: "finish",
           draw: next.winner === "draw",
         };
-      if (entry.kind === "switch")
+      if (entry.kind === "switch") {
         model.presentation.active[entry.side] = entry.index;
+        // 特殊カードが場に出た瞬間に、登場カットインと登録音声を出す。
+        announceArrival(model.presentation, entry.side);
+      }
       if (entry.kind === "status" || entry.kind === "cleanse") {
         const fighter = model.presentation.teams[entry.side][entry.index];
         fighter.status = entry.kind === "cleanse" ? null : entry.status;
         fighter.statusTurns = entry.statusTurns || 0;
       }
-      if (entry.kind === "buff" || entry.kind === "debuff")
+      if (
+        (entry.kind === "buff" || entry.kind === "debuff") &&
+        entry.field
+      )
         model.presentation.teams[entry.side][entry.index][entry.field] =
           entry.value;
       if (priorHp !== null)
@@ -387,15 +398,17 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
           ? 1200
           : ["damage", "heal"].includes(entry.kind)
             ? 850
-            : ["switch", "buff", "debuff", "status", "cleanse"].includes(
-                  entry.kind,
-                )
-              ? 750
-              : entry.kind === "knockout"
-                ? 850
-                : entry.kind === "critical"
-                  ? 500
-                  : 180,
+            : entry.kind === "destroy"
+              ? 950
+              : ["switch", "buff", "debuff", "status", "cleanse"].includes(
+                    entry.kind,
+                  )
+                ? 750
+                : entry.kind === "knockout"
+                  ? 850
+                  : entry.kind === "critical"
+                    ? 500
+                    : 180,
         priorHp !== null ? 600 : entry.kind ? 300 : 120,
         priorHp !== null ? 250 : entry.kind ? 130 : 60,
       );
@@ -467,6 +480,9 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
     model.latest = "デュエル開始。あなたの一手で、運命を変えろ。";
     effects.play("reveal");
     navigate("battle");
+    // 場に出た瞬間のカットイン。両者の先発を順番に告げる。
+    announceArrival(model.battle, model.side);
+    announceArrival(model.battle, 1 - model.side);
   }
   function cpuChoice(state, side, difficulty) {
     return chooseCpuAction(
@@ -657,6 +673,10 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
         ) {
           skipTransition();
           render();
+          if (!previous && data.battle.phase !== "finished") {
+            announceArrival(model.battle, model.side);
+            announceArrival(model.battle, 1 - model.side);
+          }
         } else await presentTransition(previous, model.battle);
       } else render();
     };

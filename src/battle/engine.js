@@ -94,6 +94,9 @@ export function createLegacyBattle(teams, seed = 1) {
           speedStage: 0,
           defenseStage: 0,
           specialDefenseStage: 0,
+          // 破壊したカードの能力を吸収した分。段階と違い、交代しても消えない。
+          attackBonus: 0,
+          specialAttackBonus: 0,
           status: null,
           statusTurns: 0,
         };
@@ -159,7 +162,8 @@ export function estimateDamage(
   const attackStage =
     (physical ? attacker.attackStage : attacker.specialAttackStage) ?? 0;
   const offense =
-    (physical ? a.stats.attack : a.stats.specialAttack) *
+    ((physical ? a.stats.attack : a.stats.specialAttack) +
+      ((physical ? attacker.attackBonus : attacker.specialAttackBonus) ?? 0)) *
     stageMultiplier(critical ? Math.max(0, attackStage) : attackStage);
   const defense = physical ? d.stats.defense : d.stats.specialDefense;
   const stage =
@@ -246,6 +250,7 @@ function useMove(state, side, action) {
     attribute: move.attribute,
     category: move.category,
     ...(move.rarity ? { rarity: move.rarity } : {}),
+    ...(move.special ? { special: true } : {}),
     name: move.name,
     targetSide:
       move.target === "self" || move.category === "回復" || move.id === "ward"
@@ -377,6 +382,55 @@ function healFighter(state, side, amount) {
     hp: fighter.hp,
   });
 }
+// 破壊は「ダメージ」ではない。HPに関係なく場から消し、元の能力を攻撃力として
+// 使い手に移す。破壊された側は控えがいれば補充、いなければ敗北になる。
+function destroyField(state, side, move) {
+  const targets = [];
+  if (move.destroy.ownBench) {
+    state.teams[side].forEach((fighter, index) => {
+      if (index !== state.active[side] && fighter.hp > 0)
+        targets.push({ side, index, fighter });
+    });
+  }
+  if (move.destroy.enemyField) {
+    const other = 1 - side,
+      index = state.active[other],
+      fighter = activeFighter(state, other);
+    if (fighter.hp > 0) targets.push({ side: other, index, fighter });
+  }
+  let attack = 0,
+    specialAttack = 0;
+  for (const target of targets) {
+    const stats = target.fighter.card.character.stats;
+    attack += stats.attack;
+    specialAttack += stats.specialAttack;
+    target.fighter.hp = 0;
+    target.fighter.status = null;
+    target.fighter.statusTurns = 0;
+    record(state, `P${target.side + 1}：${target.fighter.card.name} を破壊！`, {
+      kind: "destroy",
+      side: target.side,
+      index: target.index,
+      hp: 0,
+    });
+  }
+  const attacker = activeFighter(state, side);
+  const total = attack + specialAttack;
+  if (!total) return;
+  attacker.attackBonus = (attacker.attackBonus || 0) + total;
+  attacker.specialAttackBonus = (attacker.specialAttackBonus || 0) + total;
+  record(
+    state,
+    `${attacker.card.name} の攻撃と特攻が ${total} 上がった！（破壊した ${targets.length} 枚の力を吸収）`,
+    {
+      kind: "buff",
+      side,
+      index: state.active[side],
+      value: total,
+      absorb: targets.length,
+    },
+  );
+}
 function changeStages(state, side, changes) {
   const fighter = activeFighter(state, side);
   for (const [field, delta] of Object.entries(changes)) {
@@ -403,6 +457,10 @@ function useModernMove(state, side, move) {
     defender = activeFighter(state, 1 - side);
   if (nextRandom(state) * 100 >= move.accuracy) {
     record(state, "技は外れた！", { kind: "miss", side: 1 - side });
+    return;
+  }
+  if (move.destroy) {
+    destroyField(state, side, move);
     return;
   }
   let dealt = 0;
