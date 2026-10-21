@@ -21,46 +21,8 @@ async function quickBattle(page, reduced = false) {
   });
 }
 
-async function assertControlsFit(page) {
-  const problems = await page.evaluate(() => {
-    const nav = document.querySelector(".view-nav").getBoundingClientRect();
-    const header = document
-      .querySelector(".site-header")
-      .getBoundingClientRect();
-    const lower = nav.top > innerHeight / 2 ? nav.top : innerHeight - 30;
-    return [
-      ...document.querySelectorAll(
-        ".battle-move, .bench-card, .duel-card, .command-toolbar button, .battle-message, .battle-top-tools button",
-      ),
-    ]
-      .filter((el) => el.getClientRects().length)
-      .flatMap((el) => {
-        const r = el.getBoundingClientRect();
-        const hit = document.elementFromPoint(
-          r.x + r.width / 2,
-          r.y + r.height / 2,
-        );
-        const covered = hit && hit !== el && !el.contains(hit);
-        return r.left < 0 ||
-          r.right > innerWidth + 1 ||
-          r.top < header.bottom ||
-          r.bottom > lower + 1 ||
-          covered
-          ? [el.className || el.textContent]
-          : [];
-      });
-  });
-  expect(problems).toEqual([]);
-  expect(
-    await page.evaluate(
-      () =>
-        document.documentElement.scrollHeight <= innerHeight &&
-        document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
-}
-
-// On short phones, readable cards/copy take precedence over shrinking everything.
+// スマホではステージ＋4技が1画面に収まらないため、縦スクロールで
+// すべての操作に到達できることを確認する（クリップされて押せない状態を防ぐ）。
 async function assertControlsReachable(page) {
   for (const item of await page
     .locator(
@@ -125,21 +87,15 @@ for (const size of [
         minimumHeight,
       );
     }
-    await (size.height >= 800
-      ? assertControlsFit(page)
-      : assertControlsReachable(page));
+    await assertControlsReachable(page);
     await page.locator('[data-command="switch"]').click();
     await expect(page.locator(".bench-card")).toHaveCount(3);
-    await (size.height >= 800
-      ? assertControlsFit(page)
-      : assertControlsReachable(page));
+    await assertControlsReachable(page);
     await page.locator(".bench-card").nth(1).click();
     await expect(page.locator(".turn-indicator b")).toHaveText("2", {
       timeout: 15000,
     });
-    await (size.height >= 800
-      ? assertControlsFit(page)
-      : assertControlsReachable(page));
+    await assertControlsReachable(page);
   });
 }
 

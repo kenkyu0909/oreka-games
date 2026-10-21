@@ -157,13 +157,13 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
       // ホームからは編成画面へ。サンプルは自動で入れず、
       // 自分で作ったカードか、編成画面で選んだサンプルで対戦する。
       model.mode = action === "online" ? "online" : "cpu";
-      if (model.party.length < 3) {
-        model.error = "デッキに3枚のカードが必要です。";
-        render();
-        return;
-      }
+      // デッキ不足でも必ず編成画面へ移動する。ここで return すると
+      // ホーム画面のまま何も起きず、エラーも見えない。
+      model.error =
+        model.party.length < 3
+          ? "デッキに3枚のカードが必要です。「サンプル3体をセット」か「写真からカードをつくる」で3枚そろえてください。"
+          : "";
       navigate("battle");
-      playBattleStart();
     }),
   );
   document.addEventListener("reframe-motion-change", () => {
