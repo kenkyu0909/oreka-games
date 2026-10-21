@@ -17,7 +17,7 @@ test("published build does not contain the spoiler pack or a catalogue entry", a
   });
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("./");
-  await expect(page.locator("#download-button")).toBeEnabled();
+  await expect(page.locator("#upload-button")).toBeEnabled();
   await expect(page.locator(".hero-art img")).toHaveJSProperty(
     "complete",
     true,
@@ -44,7 +44,8 @@ for (const device of ["iPhone 13", "Pixel 7"]) {
     try {
       await page.goto("http://127.0.0.1:4173/oreka-games/#creator");
       await expect(page.locator("#photo-input")).toBeAttached();
-      await expect(page.locator("#add-team-button")).toBeEnabled();
+      // デフォルトのサンプルは無い。写真を選ぶまで追加できない。
+      await expect(page.locator("#add-team-button")).toBeDisabled();
       await page
         .locator("#photo-input")
         .setInputFiles({
@@ -60,7 +61,10 @@ for (const device of ["iPhone 13", "Pixel 7"]) {
           ),
         });
       await expect(page.locator("#card-name")).toHaveText("スマホの写真");
-      await expect(page.locator("#add-team-button")).toBeEnabled();
+      await page.locator("#generate-button").tap();
+      await expect(page.locator("#add-team-button")).toBeEnabled({
+        timeout: 20000,
+      });
       await page.locator("#add-team-button").tap();
       await expect(page.locator(".party-card")).toHaveCount(1);
       await page.locator('[data-action="samples"]').tap();

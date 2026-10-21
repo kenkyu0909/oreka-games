@@ -9,7 +9,12 @@ async function quickBattle(page, reduced = false) {
   if (reduced) await motionOff(page);
   await page.goto("/");
   await expect(page.locator("#home-screen")).toBeVisible();
-  await page.locator('[data-home-action="quick-cpu"]').click();
+  // ホームからは編成へ。サンプルは自動で入らず、編成画面で明示的にセットする。
+  await page.locator('[data-home-action="duel"]').click();
+  await expect(page.locator(".match-panel")).toBeVisible();
+  await page.locator('[data-action="samples"]').click();
+  await expect(page.locator(".party-card")).toHaveCount(3);
+  await page.locator('[data-action="start-cpu"]').click();
   await expect(page.locator(".fighter")).toHaveCount(2);
   await expect(page.locator('[data-action="move"]').first()).toBeEnabled({
     timeout: 20000,
@@ -316,7 +321,11 @@ test("mobile home and creator cards do not cover text or controls", async ({
     expect(home.cardTop).toBeGreaterThanOrEqual(home.copyBottom);
     expect(home.cardBottom).toBeLessThanOrEqual(home.actionTop);
     await page.locator('.view-nav [data-view="creator"]').click();
-    await expect(page.locator("#add-team-button")).toBeEnabled();
+    // 空のカードでは配置が変わるので、サンプルを1枚つくってから測る。
+    await page.locator("#sample-button").click();
+    await expect(page.locator("#add-team-button")).toBeEnabled({
+      timeout: 15000,
+    });
     const creator = await page.evaluate(() => {
       const card = document
         .querySelector("#card-shell")
@@ -439,7 +448,10 @@ test("arcade paper card preserves ten abilities in creator and exports a full PN
 }, testInfo) => {
   await motionOff(page);
   await page.goto("/#creator");
-  await expect(page.locator("#download-button")).toBeEnabled();
+  await page.locator("#sample-button").click();
+  await expect(page.locator("#download-button")).toBeEnabled({
+    timeout: 15000,
+  });
   await expect(page.locator("#card-primary-stats > div")).toHaveCount(10);
   await expect(page.locator("#card-mini-moves > span")).toHaveCount(4);
   await page.locator("#name-input").fill("テストの守護者");

@@ -8,6 +8,7 @@ import { MAX_BYTES } from "./limits.js";
 import { createSample } from "./sample.js";
 import { exportCard } from "./export.js";
 import { effects } from "./effects.js";
+import { playCardCutIn } from "./battle/cutin.js";
 import { initMobileGuide } from "./mobile.js";
 import {
   AWAKENING_MS,
@@ -20,6 +21,9 @@ initMobileGuide();
 const $ = (id) => document.getElementById(id);
 let current = null;
 let previewUrl = null;
+// 写真を選んだだけの状態。名前を入れて「生成」を押すまでカードにはしない。
+let pendingPhoto = null;
+let pendingUrl = null;
 let sampleIndex = 0;
 let processing = false;
 let exporting = false;
@@ -32,6 +36,7 @@ function setBusy(value) {
   processing = value;
   $("upload-button").disabled = value;
   $("sample-button").disabled = value;
+  $("generate-button").disabled = value || !pendingPhoto;
   $("download-button").disabled = value || exporting || !current;
   $("name-input").disabled = value;
   $("add-team-button").disabled = value || !current;
@@ -354,6 +359,13 @@ function forgeComplete() {
   $("stage-caption").textContent =
     `${info.finish.label} · 輝きは能力に影響しません`;
   status(info.message);
+  // 特殊カードの必殺技演出は、カードが組み上がったこの瞬間に一度だけ流す。
+  if (info.character.special && effects.motion && forgeVisible())
+    playCardCutIn({
+      name: $("card-name").textContent,
+      character: info.character,
+      image: $("card-photo").getAttribute("src"),
+    });
 }
 function forgeCancel(run) {
   if (run !== undefined && run !== forgeRun) return;
@@ -381,7 +393,69 @@ document.addEventListener("reframe-view", (event) => {
   }
 });
 
-async function loadPhoto(file, sampleName = null) {
+// 写真を選んだだけでは生成しない。プレビューと名前だけ用意して、
+// 「この写真でカードを生成」で解析を始める。
+function selectPhoto(file) {
+  if (!file || processing || exporting) return;
+  if (!globalThis.crypto?.subtle) {
+    status(
+      "画像の解析にはHTTPS接続が必要です。HTTPSのプレビューURLから開いてください。",
+      true,
+    );
+    return;
+  }
+  if (file.size > MAX_BYTES) {
+    status("画像は12MB以下にしてください。", true);
+    return;
+  }
+  if (!file.size) {
+    status("空のファイルは読み込めません。JPEG・PNGを選んでください。", true);
+    return;
+  }
+  clearAwakening();
+  const url = URL.createObjectURL(file);
+  const previousPending = pendingUrl;
+  const previousCard = previewUrl;
+  pendingPhoto = file;
+  pendingUrl = url;
+  previewUrl = null;
+  current = null;
+  const name =
+    file.name.replace(/\.[^.]+$/, "").slice(0, 18) || "名前のない切り札";
+  $("game-card").className = "game-card finish-normal";
+  $("game-card").style.setProperty("--attribute", "#987253");
+  $("card-photo").src = url;
+  $("card-photo").alt = "選択した写真";
+  $("card-shell").classList.remove("is-empty");
+  $("card-shell").classList.add("is-pending");
+  $("photo-label").textContent = "READY TO FORGE";
+  $("card-name").textContent = name;
+  $("name-input").value = name;
+  $("card-number").textContent = "NO. —";
+  $("attribute-seal").textContent = "✦";
+  $("card-level").textContent = "LEVEL —";
+  $("card-attribute").textContent = "PHOTO CARD";
+  $("finish-label").textContent = "NORMAL";
+  $("rule-label").textContent = "PHOTO-V3";
+  $("card-primary-stats").innerHTML = "";
+  $("card-mini-moves").innerHTML = "";
+  $("stats-grid").innerHTML = "";
+  $("moves-list").innerHTML = "";
+  $("analysis-list").innerHTML = "";
+  renderSpecialMark({});
+  $("finish-name").textContent = "—";
+  $("stage-caption").textContent = "能力は写真から。輝きは、運から。";
+  if (previousPending) URL.revokeObjectURL(previousPending);
+  if (previousCard) URL.revokeObjectURL(previousCard);
+  // 生成ボタンだけを有効にし、チーム追加と保存は生成後まで待つ。
+  $("generate-button").disabled = false;
+  $("add-team-button").disabled = true;
+  $("download-button").disabled = true;
+  $("card-shell").setAttribute("aria-busy", "false");
+  status("名前を確認して「この写真でカードを生成」を押してください。");
+}
+
+async function loadPhoto(file, sampleName = null, displayName = null) {
   if (!file || processing || exporting) return;
   if (!globalThis.crypto?.subtle) {
     status(
@@ -409,6 +483,7 @@ async function loadPhoto(file, sampleName = null) {
     crypto.getRandomValues(random);
     const finish = drawFinish(random[0] / 4294967296);
     const name =
+      displayName ||
       sampleName ||
       file.name.replace(/\.[^.]+$/, "").slice(0, 18) ||
       "名前のない切り札";
@@ -428,6 +503,12 @@ async function loadPhoto(file, sampleName = null) {
     $("game-card").className = `game-card finish-${finish.id}`;
     $("game-card").style.setProperty("--attribute", attr.color);
     $("card-photo").src = url;
+    $("card-shell").classList.remove("is-empty", "is-pending");
+    if (pendingUrl) {
+      URL.revokeObjectURL(pendingUrl);
+      pendingUrl = null;
+    }
+    pendingPhoto = null;
     $("card-photo").alt = sampleName
       ? `${sampleName}のサンプルイラスト`
       : "選択した写真から作成したカード";
@@ -508,7 +589,7 @@ $("upload-button").addEventListener("click", () => $("photo-input").click());
 $("photo-input").addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   event.target.value = "";
-  loadPhoto(file);
+  selectPhoto(file);
 });
 const dropZone = $("drop-zone");
 ["dragenter", "dragover"].forEach((type) =>
@@ -529,7 +610,7 @@ dropZone.addEventListener("drop", (event) => {
     status("一度に1枚の写真を選んでください。", true);
     return;
   }
-  if (files?.length) loadPhoto(files[0]);
+  if (files?.length) selectPhoto(files[0]);
 });
 window.addEventListener("dragover", (event) => event.preventDefault());
 window.addEventListener("drop", (event) => event.preventDefault());
@@ -550,6 +631,11 @@ async function showSample() {
   }
 }
 $("sample-button").addEventListener("click", showSample);
+$("generate-button").addEventListener("click", async () => {
+  if (!pendingPhoto || processing || exporting) return;
+  const name = $("name-input").value.trim() || "名前のない切り札";
+  await loadPhoto(pendingPhoto, null, name);
+});
 $("name-input").addEventListener("input", () => {
   const name = $("name-input").value.trim() || "名前のない切り札";
   $("card-name").textContent = name;
@@ -567,6 +653,13 @@ $("name-input").addEventListener("input", () => {
   renderSpecialMark(current.character);
   renderDetails(current);
   effects.play(next.special ? "rare-reveal" : "ui");
+  // 生成後に名前を特殊カードへ変えた場合も、同じ必殺技演出を見せる。
+  if (next.special && effects.motion)
+    playCardCutIn({
+      name,
+      character: next,
+      image: $("card-photo").getAttribute("src"),
+    });
 });
 $("download-button").addEventListener("click", async () => {
   if (!current || processing || exporting) return;
@@ -660,4 +753,3 @@ initBattleUI({
     }
   },
 });
-showSample();

@@ -166,7 +166,7 @@ export function assignMoves(attribute, stats, level) {
     {
       id: `${attribute}-wave`,
       name: wave,
-      category: "特殊",
+      category,
       attribute,
       power: 95,
       accuracy: 85,

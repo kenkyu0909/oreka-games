@@ -9,7 +9,7 @@ test("photo-v2 three-hit skill exposes its effect, uses one PP and presents thre
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await page.locator('.view-nav [data-view="creator"]').click();
-  await expect(page.locator("#add-team-button")).toBeEnabled();
+  await expect(page.locator("#upload-button")).toBeEnabled();
   await page.locator("#photo-input").setInputFiles({
     name: "連撃テスト.png",
     mimeType: "image/png",
@@ -25,6 +25,10 @@ test("photo-v2 three-hit skill exposes its effect, uses one PP and presents thre
     ),
   });
   await expect(page.locator("#card-name")).toHaveText("連撃テスト");
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#add-team-button")).toBeEnabled({
+    timeout: 20000,
+  });
   for (let i = 0; i < 3; i++) {
     if (i) await page.locator('.view-nav [data-view="creator"]').click();
     await page.locator("#add-team-button").click();
@@ -85,7 +89,7 @@ test("rare photo exposes a gold badge, base power, PP, rare cut-in and the 20-mo
   page.on("pageerror", (e) => errors.push(e.message));
   await page.setViewportSize({ width: 320, height: 740 });
   await page.goto("/#creator");
-  await expect(page.locator("#add-team-button")).toBeEnabled();
+  await expect(page.locator("#upload-button")).toBeEnabled();
   await page.locator("#photo-input").setInputFiles({
     name: "レア発見.png",
     mimeType: "image/png",
@@ -101,7 +105,10 @@ test("rare photo exposes a gold badge, base power, PP, rare cut-in and the 20-mo
     ),
   });
   await expect(page.locator("#card-name")).toHaveText("レア発見");
-  await expect(page.locator(".rare-card-move")).toContainText("★ 天穹断裂");
+  await page.locator("#generate-button").click();
+  await expect(page.locator(".rare-card-move")).toContainText("★ 天穹断裂", {
+    timeout: 20000,
+  });
   await expect(page.locator("#rule-label")).toHaveText("PHOTO-V3");
   for (let i = 0; i < 3; i++) {
     if (i) await page.locator('.view-nav [data-view="creator"]').click();

@@ -68,17 +68,17 @@
               何気ない写真に、まだ見ぬ力が眠っている。<br />3枚の切り札と、あなただけの戦略で挑め。
             </p>
             <div class="home-primary">
-              <button class="primary-button" data-home-action="quick-cpu">
+              <button class="primary-button" data-view="creator">
                 <span class="button-diamond">◆</span
                 ><span
-                  >デュエルを始める<small
-                    >サンプル3体ですぐにCPU対戦</small
+                  >写真からカードを作る<small
+                    >あなたの一枚が、そのまま切り札に</small
                   ></span
-                ><span class="button-arrow">→</span>
+                ><span class="button-arrow">↗</span>
               </button>
               <div class="home-secondary-actions">
-                <button class="home-create" data-view="creator">
-                  写真からカードを作る <span>↗</span>
+                <button class="home-create" data-home-action="duel">
+                  デュエルを始める <span>→</span>
                 </button>
                 <button
                   id="mobile-guide-button"
@@ -142,7 +142,7 @@
               <span class="mode-icon">◈</span
               ><span
                 ><small>SOLO DUEL</small><strong>CPUと腕試し</strong
-                ><em>3段階の難易度で、戦略を磨く。</em></span
+                ><em>4段階の難易度で、戦略を磨く。</em></span
               ><b>↗</b></button
             ><button class="home-mode" data-home-action="online">
               <span class="mode-icon">⚔</span
@@ -183,6 +183,15 @@
               <button class="sample-button" id="sample-button">
                 ↻ サンプルで試す
               </button>
+              <button
+                class="primary-button generate-button"
+                id="generate-button"
+                disabled
+              >
+                <span class="button-diamond">✧</span
+                ><span>この写真でカードを生成</span
+                ><span class="button-arrow">→</span>
+              </button>
               <aside class="customize-panel">
                 <label for="name-input">カード名 <span>18文字まで</span></label
                 ><input
@@ -196,7 +205,7 @@
                   <span>今回の加工</span><strong id="finish-name">—</strong>
                 </div>
                 <p class="customize-hint">
-                  キラ加工は能力に影響しません。<br />カード生成のたびに抽選されます。
+                  写真を選び、名前を入れて「カードを生成」。<br />キラ加工は能力に影響しません。
                 </p>
                 <div class="creator-actions">
                   <button id="add-team-button" class="battle-primary" disabled>
@@ -211,7 +220,7 @@
                 </div>
               </aside>
               <div id="status" class="status" role="status" aria-live="polite">
-                カードを準備しています…
+                写真を選ぶと、カードができあがります。
               </div>
               <div class="privacy-note">
                 <span>⌑</span>
@@ -251,9 +260,9 @@
               <div class="forge-circle"></div>
               <span class="stage-mark">PHOTO-V3 / REPRODUCIBLE GENERATION</span>
               <div
-                class="card-shell"
+                class="card-shell is-empty"
                 id="card-shell"
-                aria-busy="true"
+                aria-busy="false"
                 tabindex="-1"
               >
                 <article
@@ -273,7 +282,7 @@
                     <img id="card-photo" alt="生成したカードの写真" /><span
                       class="photo-label"
                       id="photo-label"
-                      >SAMPLE IMAGE</span
+                      >NO PHOTO</span
                     >
                   </div>
                   <div class="card-heading">
@@ -318,13 +327,13 @@
               <div>
                 <b>01</b
                 ><span
-                  >写真を選ぶ<small>色・明暗・輪郭を能力に変換。</small></span
+                  >写真と名前を決める<small>色・明暗・輪郭を能力に変換。</small></span
                 >
               </div>
               <div>
                 <b>02</b
                 ><span
-                  >カードを見極める<small
+                  >生成して見極める<small
                     >属性、レベル、4つの技を確認。</small
                   ></span
                 >
@@ -367,6 +376,28 @@
             <i style="--i: 0"></i><i style="--i: 1"></i><i style="--i: 2"></i
             ><i style="--i: 3"></i><i style="--i: 4"></i><i style="--i: 5"></i
             ><i style="--i: 6"></i><i style="--i: 7"></i>
+          </div>
+        </div>
+        <!-- 特殊技の発動時。写真と技名だけを、一瞬だけ全画面に叩きつける。 -->
+        <div
+          id="special-flash"
+          class="special-flash"
+          hidden
+          aria-hidden="true"
+        >
+          <div class="flash-rays">
+            <i style="--i: 0"></i><i style="--i: 1"></i><i style="--i: 2"></i
+            ><i style="--i: 3"></i><i style="--i: 4"></i><i style="--i: 5"></i
+            ><i style="--i: 6"></i><i style="--i: 7"></i><i style="--i: 8"></i
+            ><i style="--i: 9"></i><i style="--i: 10"></i
+            ><i style="--i: 11"></i>
+          </div>
+          <div class="flash-photo"><img alt="" /></div>
+          <div class="flash-title">
+            <small>SPECIAL MOVE</small>
+            <strong class="flash-name"></strong>
+            <span class="flash-card"></span>
+            <b class="flash-sigil" aria-hidden="true"></b>
           </div>
         </div>
       </main>
@@ -523,7 +554,7 @@
             </li>
             <li>
               <span id="mobile-online-help"
-                >「デュエルを始める」でCPU戦へ。友達対戦は、双方が同じURLを開いて合言葉ルームに入ります。</span
+                >まずは「写真からカードを作る」で3枚を用意。編成画面の「サンプル3体をセット」ですぐ試すこともできます。友達対戦は、双方が同じURLを開いて合言葉ルームに入ります。</span
               >
             </li>
             <li>

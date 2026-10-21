@@ -9,12 +9,12 @@ import {
   publicState,
 } from "./engine.js";
 import { chooseCpuAction } from "./cpu.js";
-import { makeCpuTeam, seededRandom } from "./presets.js";
+import { makeCpuTeam, makeStrongCpuTeam, seededRandom } from "./presets.js";
 import { RoomConnection, savedSession } from "./network.js";
 import { wireTeam } from "./protocol.js";
 import { effects } from "../effects.js";
 import { isFinalKnockout } from "./highlights.js";
-import { announceArrival, clearCardCutIn } from "./cutin.js";
+import { clearCardCutIn, playSpecialActivation, playBattleStart } from "./cutin.js";
 import {
   renderLobby,
   renderBattle,
@@ -147,16 +147,23 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
     }),
   );
   document.querySelectorAll("[data-home-action]").forEach((button) =>
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", () => {
       effects.play("ui");
       const action = button.dataset.homeAction;
       if (model.battle || model.room || model.netBusy) {
         navigate("battle");
         return;
       }
+      // ホームからは編成画面へ。サンプルは自動で入れず、
+      // 自分で作ったカードか、編成画面で選んだサンプルで対戦する。
       model.mode = action === "online" ? "online" : "cpu";
+      if (model.party.length < 3) {
+        model.error = "デッキに3枚のカードが必要です。";
+        render();
+        return;
+      }
       navigate("battle");
-      if (action === "quick-cpu" && (await fillSamples())) startCpu();
+      playBattleStart();
     }),
   );
   document.addEventListener("reframe-motion-change", () => {
@@ -315,6 +322,14 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
       model.latest = entry.text;
       if (entry.kind === "move") {
         attack = entry;
+        // 特殊技は発動の瞬間、写真と技名だけを全画面に叩きつける。
+        if (entry.special)
+          playSpecialActivation(
+            model.presentation.teams[entry.side][
+              model.presentation.active[entry.side]
+            ].card,
+            entry.name,
+          );
         model.effect = { ...entry, kind: "charge" };
         if (entry.moveIndex !== null)
           model.presentation.teams[entry.side][
@@ -359,11 +374,8 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
           kind: "finish",
           draw: next.winner === "draw",
         };
-      if (entry.kind === "switch") {
+      if (entry.kind === "switch")
         model.presentation.active[entry.side] = entry.index;
-        // 特殊カードが場に出た瞬間に、登場カットインと登録音声を出す。
-        announceArrival(model.presentation, entry.side);
-      }
       if (entry.kind === "status" || entry.kind === "cleanse") {
         const fighter = model.presentation.teams[entry.side][entry.index];
         fighter.status = entry.kind === "cleanse" ? null : entry.status;
@@ -471,18 +483,24 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
       model.seed = value
         ? Number(value)
         : crypto.getRandomValues(new Uint32Array(1))[0] || 1;
-      model.enemy = makeCpuTeam(model.seed);
+      model.enemy =
+        model.difficulty === "strongest"
+          ? makeStrongCpuTeam(model.seed)
+          : makeCpuTeam(model.seed);
+    }
+    if (model.party.length < 3) {
+      model.error = "デッキに3枚のカードが必要です。";
+      render();
+      return;
     }
     resetBattle();
     model.mode = "cpu";
     model.side = 0;
     model.battle = createBattle([model.party, model.enemy], model.seed);
+    playBattleStart();
     model.latest = "デュエル開始。あなたの一手で、運命を変えろ。";
     effects.play("reveal");
     navigate("battle");
-    // 場に出た瞬間のカットイン。両者の先発を順番に告げる。
-    announceArrival(model.battle, model.side);
-    announceArrival(model.battle, 1 - model.side);
   }
   function cpuChoice(state, side, difficulty) {
     return chooseCpuAction(
@@ -673,10 +691,6 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
         ) {
           skipTransition();
           render();
-          if (!previous && data.battle.phase !== "finished") {
-            announceArrival(model.battle, model.side);
-            announceArrival(model.battle, 1 - model.side);
-          }
         } else await presentTransition(previous, model.battle);
       } else render();
     };
@@ -775,8 +789,10 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
     true,
   );
   root.addEventListener("change", (event) => {
-    if (event.target.id === "cpu-difficulty")
+    if (event.target.id === "cpu-difficulty") {
       model.difficulty = event.target.value;
+      render();
+    }
     if (event.target.id === "fast-battle") {
       model.fast = event.target.checked;
       render();

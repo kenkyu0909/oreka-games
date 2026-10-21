@@ -93,6 +93,9 @@
     grid-template-columns: 1fr;
     grid-template-rows: repeat(4, minmax(min-content, 1fr));
     gap: 8px;
+    /* 低い画面では4技の合計がコマンドバーを超えて溢れるため、リスト側で
+       スクロールして「おまかせ」「テンポ速め」に重ならないようにする。 */
+    overflow-y: auto;
   }
   .battle-move {
     padding: 9px 12px;
@@ -136,6 +139,14 @@
   }
 }
 @media (max-width: 999px) {
+  /* スマホ縦持ちではロビーも対戦も固定シェル(body 100dvh・スクロール禁止)
+     に収まらず、あふれた技やボタンがタッチで届かなくなる。
+     対戦ビューの間だけ #main-content を縦スクロール可能にして、
+     ヘッダー/フッターを固定したまま全ての操作を指で届くようにする。 */
+  body[data-view="battle"] #main-content {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
   .battle-app.is-live {
     height: auto;
     min-height: 100%;
@@ -146,9 +157,10 @@
     padding: 0 8px 6px;
   }
   .move-buttons {
-    flex: none;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, auto);
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, minmax(min-content, 1fr));
+    gap: 8px;
+    overflow-y: auto;
   }
   .battle-move {
     min-height: 94px;
@@ -168,6 +180,12 @@
   }
   .arena-stage .duel-card {
     height: min(calc(100cqh - 49px), calc(75cqw - 18px), 420px);
+  }
+  .move-buttons {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, minmax(min-content, 1fr));
+    gap: 8px;
+    overflow-y: auto;
   }
   .battle-move .move-button-heading > b {
     font-size: 12px;

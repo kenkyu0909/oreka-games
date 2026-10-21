@@ -12,7 +12,7 @@ test("card generation plays an assembly scene and settles every part visible", a
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/#creator");
-  await expect(page.locator("#download-button")).toBeEnabled();
+  await expect(page.locator("#sample-button")).toBeEnabled();
   await page.locator("#sample-button").click();
   // 解析中は組み立てシーンと工程リストが出る。
   await expect(page.locator("#forge-scene")).toBeVisible();
@@ -50,17 +50,22 @@ test("card generation plays an assembly scene and settles every part visible", a
   await expect(page.locator("#card-mini-moves > span")).toHaveCount(4);
 });
 
-test("opening the app on home and then the creator still plays the scene", async ({
+test("home starts with no card; the creator stays empty until a sample is requested", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  // ホームで起動すると、最初のサンプルは作成タブが見えていない間に出来上がる。
+  // デフォルトのサンプルカードは作らない。ホームも作成画面も空のまま始まる。
   await page.goto("/");
   await expect(page.locator("#home-screen")).toBeVisible();
-  await expect(page.locator("#download-button")).toBeEnabled();
-  await expect(page.locator("#forge-scene")).toBeHidden();
-  // 作成タブを開いた時点で、生成シーンが最初から再生される。
+  await expect(page.locator("#add-team-button")).toBeDisabled();
+  await expect(page.locator("#download-button")).toBeDisabled();
+  expect(await page.locator("#card-photo").getAttribute("src")).toBe(null);
+  await expect(page.locator("#card-shell")).toHaveClass(/is-empty/);
   await page.locator('.view-nav [data-view="creator"]').click();
+  await expect(page.locator("#forge-scene")).toBeHidden();
+  await expect(page.locator("#status")).toContainText("写真を選ぶと");
+  // サンプルを明示的に選んだ時だけ、生成シーンが最初から再生される。
+  await page.locator("#sample-button").click();
   await expect(page.locator("#forge-scene")).toBeVisible();
   await expect(page.locator('[data-forge-step="finish"]')).not.toHaveAttribute(
     "data-state",
@@ -73,26 +78,27 @@ test("opening the app on home and then the creator still plays the scene", async
       "done",
     );
   await expect(page.locator("#card-shell")).not.toHaveClass(/assembling/);
+  await expect(page.locator("#card-shell")).not.toHaveClass(/is-empty/);
   const opacity = await page
     .locator(".game-card .photo-frame")
     .evaluate((el) => getComputedStyle(el).opacity);
   expect(opacity).toBe("1");
 });
 
-test("opening the creator while the first sample is still being made still plays the scene", async ({
+test("sample cards are only created on request and never auto-fill the team", async ({
   page,
 }) => {
+  await motionOff(page);
   await page.goto("/");
   await expect(page.locator("#home-screen")).toBeVisible();
-  // 最初のサンプル生成が終わる前に作成タブへ移っても、シーンは見せる。
   await page.locator('.view-nav [data-view="creator"]').click();
-  await expect(page.locator("#forge-scene")).toBeVisible({ timeout: 15000 });
-  await expect(page.locator("#forge-scene")).toBeHidden({ timeout: 22000 });
-  await expect(page.locator('[data-forge-step="finish"]')).toHaveAttribute(
-    "data-state",
-    "done",
-  );
-  await expect(page.locator("#card-shell")).not.toHaveClass(/assembling/);
+  await expect(page.locator("#add-team-button")).toBeDisabled();
+  await page.locator("#sample-button").click();
+  await expect(page.locator("#add-team-button")).toBeEnabled({ timeout: 15000 });
+  // サンプルは作成画面に出るだけで、勝手にチームへ入らない。
+  await page.locator('.view-nav [data-view="battle"]').click();
+  await expect(page.locator(".party-card")).toHaveCount(0);
+  await expect(page.locator('[data-action="samples"]')).toBeVisible();
 });
 
 test("the device asking for reduced motion no longer hides the scene", async ({
@@ -100,7 +106,7 @@ test("the device asking for reduced motion no longer hides the scene", async ({
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/#creator");
-  await expect(page.locator("#download-button")).toBeEnabled();
+  await expect(page.locator("#sample-button")).toBeEnabled();
   // 端末の「動きを減らす」設定でも演出は止めない。
   await expect(page.locator("body")).toHaveAttribute("data-motion", "on");
   await page.locator("#sample-button").click();
@@ -113,13 +119,11 @@ test("motion off skips the assembly scene and shows the card immediately", async
 }) => {
   await motionOff(page);
   await page.goto("/#creator");
-  await expect(page.locator("#download-button")).toBeEnabled();
   await expect(page.locator("body")).toHaveAttribute("data-motion", "off");
-  const before = await page.locator("#card-photo").getAttribute("src");
+  await expect(page.locator("#add-team-button")).toBeDisabled();
   await page.locator("#sample-button").click();
-  await expect(page.locator("#card-photo")).not.toHaveAttribute("src", before, {
-    timeout: 8000,
-  });
+  await expect(page.locator("#add-team-button")).toBeEnabled({ timeout: 15000 });
+  expect(await page.locator("#card-photo").getAttribute("src")).toMatch(/^blob:/);
   await expect(page.locator("#forge-scene")).toBeHidden();
   const opacity = await page
     .locator(".game-card .card-heading")
@@ -135,7 +139,7 @@ test.describe("narrow screen", () => {
   }) => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.goto("/#creator");
-    await expect(page.locator("#download-button")).toBeEnabled();
+    await expect(page.locator("#sample-button")).toBeEnabled();
     await page.locator("#sample-button").click();
     // 狭い画面では左右の工程リストをやめ、カード下のHUDに畳む。
     await expect(page.locator("#forge-hud")).toBeVisible();

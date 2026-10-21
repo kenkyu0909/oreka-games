@@ -879,6 +879,22 @@ img {
   font-size: 11px;
   border-bottom: 1px solid #38212f;
 }
+.generate-button {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 48px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.generate-button .button-arrow {
+  margin-left: auto;
+}
+/* 写真を選んだだけの状態。統計と技は生成後に埋まる。 */
+.card-shell.is-pending .card-primary-stats,
+.card-shell.is-pending .card-mini-moves {
+  opacity: 0.35;
+}
 .customize-panel {
   margin-top: 23px;
 }
@@ -1100,6 +1116,30 @@ img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+/* 写真がまだ選ばれていない時は、空のカードとして見せる。 */
+.card-shell.is-empty .photo-frame img,
+.card-shell.is-empty .photo-label,
+.card-shell.is-empty .card-primary-stats,
+.card-shell.is-empty .card-mini-moves {
+  display: none;
+}
+.card-shell.is-empty .photo-frame:after {
+  content: "NO PHOTO";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 8px var(--display);
+  letter-spacing: 2px;
+  color: #e0c3ad;
+  background: repeating-linear-gradient(
+    135deg,
+    #3a2b2c,
+    #3a2b2c 8px,
+    #332629 8px,
+    #332629 16px
+  );
 }
 .photo-label {
   position: absolute;
@@ -2801,6 +2841,8 @@ img {
     overflow: auto;
     min-height: 100dvh;
     height: auto;
+    /* 対戦中の意図しないプル・トゥ・リフレッシュ(リロードで降参扱い)を防ぐ */
+    overscroll-behavior-y: contain;
   }
   #app {
     min-height: 100dvh;

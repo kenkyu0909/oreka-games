@@ -218,12 +218,14 @@ function damage(state, fighter, amount, extra = {}) {
   fighter.hp -= actual;
   record(
     state,
-    `P${side + 1}：${fighter.card.name} に ${actual} ダメージ。${extra.hit ? `（${extra.hit}/${extra.totalHits}連撃）` : ""}`,
+    // 表示は満額の与ダメージ（残りHPで頭打ちにしない）。HP減少自体は actual のまま。
+    `P${side + 1}：${fighter.card.name} に ${amount} ダメージ。${extra.hit ? `（${extra.hit}/${extra.totalHits}連撃）` : ""}`,
     {
       kind: "damage",
       side,
       index: state.teams[side].indexOf(fighter),
       amount: actual,
+      raw: amount,
       hp: fighter.hp,
       ...extra,
     },

@@ -273,6 +273,20 @@ test("recoil uses actual damage even on target KO and can produce a simultaneous
     Math.ceil(damageEvents(out)[0].amount * 0.3),
   );
 });
+test("overkill displays the full dealt damage while HP still stops at zero", () => {
+  // 残りHP1の相手に満額が通る攻撃: 表示は満額（例: 60）、HP減少は1。
+  const s = battle("aqua-siphon");
+  s.teams[1][0].hp = 1;
+  const n = play(s);
+  const [hit] = damageEvents(n);
+  assert.equal(hit.hp, 0);
+  assert.equal(hit.amount, 1); // HP実減少は残りHPまで
+  assert.ok(hit.raw > 1); // 与えることができるダメージ量は満額
+  assert.ok(hit.text.includes(`に ${hit.raw} ダメージ。`));
+  // 頭打ちにならない場合 raw と amount は同じ値になる
+  const [clean] = damageEvents(play(battle("aqua-siphon")));
+  assert.equal(clean.raw, clean.amount);
+});
 test("cleanse precedes recovery, removes seal and blocks poison tick; scaled recovery obeys cap", () => {
   const s = battle("cleansing-rain");
   s.teams[0][0].hp = 100;

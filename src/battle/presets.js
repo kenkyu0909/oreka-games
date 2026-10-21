@@ -1,4 +1,6 @@
 import { generateCharacter, ATTRIBUTES, FINISHES } from "../game.js";
+import { STATIC_HOSTING } from "../hosting.js";
+import { STRONG_CARDS } from "./strong-roster.js";
 export function seededRandom(seed) {
   let state = seed >>> 0 || 1;
   return () => {
@@ -106,7 +108,7 @@ const profiles = [
     },
   ],
 ];
-function art(attribute, index) {
+export function art(attribute, index) {
   const { color, symbol } = ATTRIBUTES[attribute];
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="${color}"/><stop offset="1" stop-color="#142d29"/></linearGradient></defs><rect width="400" height="320" fill="url(#g)"/><circle cx="200" cy="147" r="93" fill="none" stroke="#ffffff33"/><circle cx="200" cy="147" r="112" fill="none" stroke="#ffffff22"/><path d="M200 37 295 202 105 202Z" fill="#ffffff0c" stroke="#ffffff44"/><text x="200" y="178" text-anchor="middle" font-family="serif" font-size="85" fill="#f0eccb">${symbol}</text><text x="200" y="288" text-anchor="middle" font-family="sans-serif" letter-spacing="5" font-size="13" fill="#ffffff88">CPU / ${String(index + 1).padStart(2, "0")}</text></svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
@@ -127,4 +129,22 @@ export function makeCpuTeam(seed) {
         fingerprint: `cpu-${index}`,
       };
     });
+}
+
+// CPU「最強」専用。配布パックの10枚から重複なしで3枚を抽選する。
+// 同じシードなら同じ3枚になり、再戦の再現性を保つ。
+export function makeStrongCpuTeam(seed) {
+  const random = seededRandom(seed ^ 0x9e3779b9);
+  return STRONG_CARDS.map((card) => ({ card, sort: random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .slice(0, 3)
+    .map(({ card }) => ({
+      name: card.name,
+      character: structuredClone(card.character),
+      image: STATIC_HOSTING
+        ? art(card.attribute, card.index)
+        : card.preview,
+      finish: FINISHES[0],
+      fingerprint: `strong-${card.id}`,
+    }));
 }

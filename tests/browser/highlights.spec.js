@@ -7,7 +7,7 @@ const manifest = JSON.parse(
 );
 async function createLegend(page, id) {
   await page.goto("/#creator");
-  await expect(page.locator("#add-team-button")).toBeEnabled();
+  await expect(page.locator("#upload-button")).toBeEnabled();
   const card = manifest.cards.find((c) => c.id === id);
   await page
     .locator("#photo-input")
@@ -21,7 +21,10 @@ async function createLegend(page, id) {
   await expect(page.locator("#card-name")).toHaveText(card.name, {
     timeout: 20000,
   });
-  await expect(page.locator("#add-team-button")).toBeEnabled();
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#add-team-button")).toBeEnabled({
+    timeout: 30000,
+  });
   return card;
 }
 
@@ -61,7 +64,7 @@ test("legend import runs the real worker, shows a rare awakening and enters the 
 
 test("normal photos do not trigger the rare awakening", async ({ page }) => {
   await page.goto("/#creator");
-  await expect(page.locator("#download-button")).toBeEnabled();
+  await expect(page.locator("#upload-button")).toBeEnabled();
   await page.locator("#photo-input").setInputFiles({
     name: "normal.png",
     mimeType: "image/png",
@@ -75,6 +78,10 @@ test("normal photos do not trigger the rare awakening", async ({ page }) => {
     ),
   });
   await expect(page.locator("#card-name")).toHaveText("normal");
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#add-team-button")).toBeEnabled({
+    timeout: 20000,
+  });
   await expect(page.locator("#rare-awakening")).not.toBeVisible();
 });
 
@@ -136,7 +143,7 @@ test("game has no card catalogue or automatic strong-card requests", async ({
       packRequests.push(request.url());
   });
   await page.goto("/");
-  await expect(page.locator("#download-button")).toBeEnabled();
+  await expect(page.locator("#upload-button")).toBeEnabled();
   await expect(page.locator("#vault-dialog, [data-open-vault]")).toHaveCount(0);
   await page.locator('.view-nav [data-view="creator"]').click();
   await expect(page.getByText("伝説のカード図鑑")).toHaveCount(0);

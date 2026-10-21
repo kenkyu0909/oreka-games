@@ -23,7 +23,8 @@ test("photo creation → add to team → reorder/remove; no photo upload for sol
   page.on("request", (request) => requests.push(request));
   await page.goto("/");
   await page.locator('.view-nav [data-view="creator"]').click();
-  await expect(page.locator("#add-team-button")).toBeEnabled();
+  // デフォルトのサンプルは無い。写真を選ぶまでチームには追加できない。
+  await expect(page.locator("#add-team-button")).toBeDisabled();
   const pixels = new Uint8Array(
     Array.from({ length: 64 }, () => [190, 60, 25, 255]).flat(),
   );
@@ -36,6 +37,10 @@ test("photo creation → add to team → reorder/remove; no photo upload for sol
   });
   await expect(page.locator("#card-name")).toHaveText("my-photo");
   await page.locator("#name-input").fill("<img src=x>");
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#add-team-button")).toBeEnabled({
+    timeout: 20000,
+  });
   await page.locator("#add-team-button").click();
   await expect(page.locator(".party-card")).toHaveCount(1);
   await expect(page.locator(".party-card h4")).toHaveText("<img src=x>");

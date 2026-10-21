@@ -49,7 +49,7 @@ test("HTTPS preview QR really decodes to the public entry URL; copy/share keep p
   });
   await securePreview(page);
   expect(await page.evaluate(() => isSecureContext)).toBe(true);
-  await expect(page.locator("#add-team-button")).toBeEnabled();
+  await expect(page.locator("#upload-button")).toBeEnabled();
   await page.locator("#mobile-guide-button").click();
   await expect(page.locator("#mobile-guide")).toBeVisible();
   expect(await scanQr(page)).toBe(`${origin}/`);
@@ -159,7 +159,7 @@ for (const device of ["iPhone 13", "Pixel 7"]) {
         expect(box.height).toBeGreaterThanOrEqual(44);
       }
       await page.locator('.view-nav [data-view="creator"]').tap();
-      await expect(page.locator("#add-team-button")).toBeEnabled();
+      await expect(page.locator("#upload-button")).toBeEnabled();
       expect(
         await page
           .locator("#name-input")
@@ -184,7 +184,10 @@ for (const device of ["iPhone 13", "Pixel 7"]) {
         ),
       });
       await expect(page.locator("#card-name")).toHaveText("スマホ写真");
-      await expect(page.locator("#card-mini-moves > span")).toHaveCount(4);
+      await page.locator("#generate-button").tap();
+      await expect(page.locator("#card-mini-moves > span")).toHaveCount(4, {
+        timeout: 20000,
+      });
       await page.locator("#add-team-button").tap();
       await expect(page.locator(".party-card")).toHaveCount(1);
       await page.locator('[data-action="samples"]').tap();
@@ -228,5 +231,7 @@ test("HTTP on a non-local host explains HTTPS instead of a cryptic photo decoder
   await expect(page.locator("#mobile-qr")).toBeHidden();
   await page.locator("#mobile-guide-close").click();
   await page.locator('.view-nav [data-view="creator"]').click();
+  // 写真がない状態では自動生成しないので、明示的にサンプルを要求して判定を出す。
+  await page.locator("#sample-button").click();
   await expect(page.locator("#status")).toContainText("HTTPS接続が必要");
 });
