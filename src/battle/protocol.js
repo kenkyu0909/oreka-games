@@ -3,20 +3,9 @@ import {
   SUPPORTED_RULE_VERSIONS,
   FINISHES,
 } from "../game.js";
+import { FEATURE_KEYS } from "../features.js";
+export { FEATURE_KEYS };
 export const PROTOCOL_VERSION = 5;
-export const FEATURE_KEYS = [
-  "brightness",
-  "saturation",
-  "contrast",
-  "detail",
-  "symmetry",
-  "diversity",
-  "red",
-  "green",
-  "blue",
-  "resolution",
-  "portrait",
-];
 export const MAX_PHOTO_LENGTH = 120000;
 
 export function normalizeTeam(input) {

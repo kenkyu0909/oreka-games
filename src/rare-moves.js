@@ -1,4 +1,6 @@
 import { assignMovesV2 } from "./moves.js";
+import { FEATURE_KEYS } from "./features.js";
+import { createRandom } from "./random.js";
 
 // photo-v3 adds exactly one rare fourth-slot move to a 5% feature-hash gate.
 // Old v2's pool and assignment are intentionally untouched.
@@ -232,31 +234,13 @@ for (const m of entries) {
   Object.freeze(m);
 }
 export const RARE_MOVE_LIBRARY = Object.freeze(entries);
-const FEATURE_ORDER = [
-  "brightness",
-  "saturation",
-  "contrast",
-  "detail",
-  "symmetry",
-  "diversity",
-  "red",
-  "green",
-  "blue",
-  "resolution",
-  "portrait",
-];
 export function assignMovesV3(attribute, stats, level, features) {
   const moves = assignMovesV2(attribute, stats, level, features);
   let seed = 0x72617265;
-  for (const key of FEATURE_ORDER)
+  for (const key of FEATURE_KEYS)
     seed = Math.imul(seed ^ (features[key] ?? 0), 16777619) >>> 0;
   seed = (seed ^ 0x9e3779b9) >>> 0 || 1;
-  const random = () => {
-    seed ^= seed << 13;
-    seed ^= seed >>> 17;
-    seed ^= seed << 5;
-    return (seed >>> 0) / 4294967296;
-  };
+  const random = createRandom(seed);
   if (random() >= RARE_RATE) return moves;
   const weight = (m) =>
     m.attribute === attribute ? 3 : m.attribute === null ? 1.2 : 0.8;

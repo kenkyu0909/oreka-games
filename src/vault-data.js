@@ -1,4 +1,5 @@
 import { characterForCard, RULE_VERSION } from "./game.js";
+import { FEATURE_KEYS } from "./features.js";
 import { MAX_BYTES } from "./limits.js";
 export function validateVault(data) {
   if (
@@ -12,25 +13,12 @@ export function validateVault(data) {
     );
   const ids = new Set();
   for (const card of data.cards) {
-    const keys = [
-      "brightness",
-      "saturation",
-      "contrast",
-      "detail",
-      "symmetry",
-      "diversity",
-      "red",
-      "green",
-      "blue",
-      "resolution",
-      "portrait",
-    ];
     if (
       !card ||
       typeof card.name !== "string" ||
       [...card.name].length > 18 ||
       typeof card.role !== "string" ||
-      !keys.every(
+      !FEATURE_KEYS.every(
         (key) =>
           Number.isInteger(card.character?.features?.[key]) &&
           card.character.features[key] >= 0 &&

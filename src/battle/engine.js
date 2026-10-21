@@ -1,4 +1,5 @@
 import { assignMoves, movesForCharacter } from "../game.js";
+import { xorshiftStep } from "../random.js";
 import { METAL_SLIME_HIT_FACTOR } from "./metal-slime.js";
 
 export const BATTLE_VERSION = "battle-v4";
@@ -68,11 +69,7 @@ export const speed = (fighter) =>
 export const stageMultiplier = (stage = 0) =>
   stage >= 0 ? (2 + Math.min(6, stage)) / 2 : 2 / (2 - Math.max(-6, stage));
 export function nextRandom(state) {
-  let x = state.seed >>> 0;
-  x ^= x << 13;
-  x ^= x >>> 17;
-  x ^= x << 5;
-  state.seed = x >>> 0;
+  state.seed = xorshiftStep(state.seed);
   return state.seed / 4294967296;
 }
 function record(state, text, event = {}) {

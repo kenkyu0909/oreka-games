@@ -1,4 +1,6 @@
 // photo-v2: a canonical, data-only move library shared by client and server.
+import { FEATURE_KEYS } from "./features.js";
+import { createRandom } from "./random.js";
 const move = (id, name, attribute, category, power, pp, text, extra = {}) => ({
   id,
   name,
@@ -62,7 +64,7 @@ const entries = [
     support,
     null,
     7,
-    "自分の物理攻撃を2段階上げる。",
+    "闘志を燃やして、自分の物理攻撃を2段階上げる。",
     { stages: { attackStage: 2 }, target: "self" },
   ),
   move(
@@ -72,7 +74,7 @@ const entries = [
     physical,
     55,
     10,
-    "攻撃後、相手の物理防御を1段階下げる。",
+    "灰をまとった一撃。攻撃後、相手の物理防御を1段階下げる。",
     { stages: { defenseStage: -1 }, target: "enemy" },
   ),
   move(
@@ -101,7 +103,7 @@ const entries = [
     special,
     60,
     10,
-    "与えたダメージの45%を基準にHP吸収。回復力で増減。",
+    "水の流れで相手の力を吸い上げ、与えたダメージの45%を基準にHPを回復する。回復力で増減。",
     { drain: 0.45 },
   ),
   move(
@@ -150,7 +152,7 @@ const entries = [
     physical,
     38,
     14,
-    "通常の技より先に攻撃する。先制技同士は素早さ順。",
+    "風をまとって踏み込み、通常の技より先に攻撃する。先制技同士は素早さ順。",
     { priority: 1 },
   ),
   move(
@@ -170,7 +172,7 @@ const entries = [
     support,
     null,
     7,
-    "自分の素早さを2段階上げる。次ターンから行動順に反映。",
+    "追い風を受けて、自分の素早さを2段階上げる。次ターンから行動順に反映。",
     { stages: { speedStage: 2 }, target: "self" },
   ),
   move(
@@ -190,7 +192,7 @@ const entries = [
     special,
     65,
     9,
-    "技の効果で相手の有効な防御をさらに40%無視する。",
+    "真空の刃で守りを裂き、相手の有効な防御をさらに40%無視する。",
     { ignoreDefense: 0.4 },
   ),
   move(
@@ -209,7 +211,7 @@ const entries = [
     physical,
     70,
     8,
-    "技の効果で相手の有効な防御をさらに40%無視する。",
+    "大地の断層を走らせ、相手の有効な防御をさらに40%無視する。",
     { ignoreDefense: 0.4 },
   ),
   move(
@@ -268,7 +270,7 @@ const entries = [
     special,
     65,
     9,
-    "技の効果で相手の有効な防御をさらに40%無視する。",
+    "裁きの光で守りを貫き、相手の有効な防御をさらに40%無視する。",
     { ignoreDefense: 0.4 },
   ),
   move(
@@ -330,7 +332,7 @@ const entries = [
     physical,
     65,
     8,
-    "与えたダメージの45%を基準にHP吸収。回復力で増減。",
+    "闇に溶け込んで生命力を奪い、与えたダメージの45%を基準にHPを回復する。回復力で増減。",
     { drain: 0.45 },
   ),
   move(
@@ -360,7 +362,7 @@ const entries = [
     physical,
     38,
     14,
-    "通常の技より先に攻撃する。先制技同士は素早さ順。",
+    "影から不意を突き、通常の技より先に攻撃する。先制技同士は素早さ順。",
     { priority: 1 },
   ),
   move(
@@ -430,7 +432,7 @@ const entries = [
     support,
     null,
     7,
-    "自分の物理攻撃を2段階上げる。",
+    "呼吸を整えて闘気を集中し、自分の物理攻撃を2段階上げる。",
     { stages: { attackStage: 2 }, target: "self" },
   ),
   move(
@@ -450,7 +452,7 @@ const entries = [
     support,
     null,
     7,
-    "自分の素早さを2段階上げる。次ターンから行動順に反映。",
+    "動きを研ぎ澄まし、自分の素早さを2段階上げる。次ターンから行動順に反映。",
     { stages: { speedStage: 2 }, target: "self" },
   ),
   move(
@@ -490,7 +492,7 @@ const entries = [
     physical,
     50,
     12,
-    "攻撃後、相手の物理防御を1段階下げる。",
+    "鎧の継ぎ目を狙って砕き、攻撃後、相手の物理防御を1段階下げる。",
     { stages: { defenseStage: -1 }, target: "enemy" },
   ),
 ];
@@ -530,31 +532,13 @@ export function moveTags(move) {
   return tags.length ? tags : ["基本"];
 }
 // Ordered integer hashing, independent of object property insertion order and finish.
-const keys = [
-  "brightness",
-  "saturation",
-  "contrast",
-  "detail",
-  "symmetry",
-  "diversity",
-  "red",
-  "green",
-  "blue",
-  "resolution",
-  "portrait",
-];
 export function assignMovesV2(attribute, stats, level, features) {
   let seed = 2166136261;
-  for (const key of keys) {
+  for (const key of FEATURE_KEYS) {
     seed = Math.imul(seed ^ (features[key] ?? 0), 16777619) >>> 0;
   }
   seed = (seed ^ Math.imul(level, 2654435761)) >>> 0 || 1;
-  const random = () => {
-    seed ^= seed << 13;
-    seed ^= seed >>> 17;
-    seed ^= seed << 5;
-    return (seed >>> 0) / 4294967296;
-  };
+  const random = createRandom(seed);
   const selected = [];
   const weight = (m) => {
     let n = m.attribute === attribute ? 2.4 : m.attribute === null ? 1.1 : 1;

@@ -1,6 +1,7 @@
 import { assignMovesV2 } from "./moves.js";
 import { assignMovesV3 } from "./rare-moves.js";
 import { specialCardFor, withSpecialMove } from "./special-cards.js";
+import { DETAIL_FEATURE_KEYS, FEATURE_LABELS } from "./features.js";
 import {
   STRONG_SIGNATURES,
   characterSignature,
@@ -34,16 +35,11 @@ export const STATS = [
   ["recovery", "回復力", 100, "緑の割合・明るさ"],
   ["piercing", "貫通力", 100, "輪郭の細かさ・明暗差"],
 ];
-export const FEATURES = [
-  ["brightness", "明るさ"],
-  ["saturation", "鮮やかさ"],
-  ["contrast", "明暗差"],
-  ["detail", "輪郭の細かさ"],
-  ["symmetry", "左右対称度"],
-  ["diversity", "色の多様性"],
-  ["green", "緑の割合"],
-  ["resolution", "画素数スコア"],
-];
+// 表示用の8項目。キーとラベルは features.js を単一の定義とする。
+export const FEATURES = DETAIL_FEATURE_KEYS.map((key) => [
+  key,
+  FEATURE_LABELS[key],
+]);
 export const FINISHES = [
   { id: "normal", label: "ノーマル", short: "NORMAL", weight: 55 },
   { id: "silver", label: "シルバーフォイル", short: "SILVER FOIL", weight: 25 },

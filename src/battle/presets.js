@@ -1,15 +1,10 @@
 import { generateCharacter, ATTRIBUTES, FINISHES } from "../game.js";
 import { STATIC_HOSTING } from "../hosting.js";
+import { createRandom } from "../random.js";
 import { STRONG_CARDS } from "./strong-roster.js";
 import { METAL_SLIME_CHANCE, metalSlimeCard } from "./metal-slime.js";
 export function seededRandom(seed) {
-  let state = seed >>> 0 || 1;
-  return () => {
-    state ^= state << 13;
-    state ^= state >>> 17;
-    state ^= state << 5;
-    return (state >>> 0) / 4294967296;
-  };
+  return createRandom(seed);
 }
 const profiles = [
   [
