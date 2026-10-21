@@ -1,4 +1,5 @@
 import { assignMoves, movesForCharacter } from "../game.js";
+import { METAL_SLIME_HIT_FACTOR } from "./metal-slime.js";
 
 export const BATTLE_VERSION = "battle-v4";
 export const MAX_TURNS = 60;
@@ -39,6 +40,25 @@ export const effectiveness = (attack, defense) =>
   MATCHUPS[attack]?.[defense] ?? 1;
 export const activeFighter = (state, side) =>
   state.teams[side][state.active[side]];
+// 白銀スライムが場にいる間は、相手の命中率を大きく下げる。
+// 100%の技も例外ではなく、35%まで落ちる（100%を上書き）。
+export function moveAccuracy(state, side, move) {
+  const defender = activeFighter(state, 1 - side);
+  const accuracy = Number.isFinite(move.accuracy) ? move.accuracy : 100;
+  // 自分を対象にする強化・回復は、相手の回避の影響を受けない。
+  const selfTarget =
+    move.target === "self" ||
+    move.category === "回復" ||
+    move.id === "ward" ||
+    move.id === "restore";
+  if (defender?.card.character.metalSlime && !selfTarget)
+    return Math.min(accuracy, 100) * METAL_SLIME_HIT_FACTOR;
+  return accuracy;
+}
+const missMessage = (defender) =>
+  defender?.card.character.metalSlime
+    ? `${defender.card.name} はするりとかわした！`
+    : "攻撃は外れた！";
 export const living = (state, side) =>
   state.teams[side].map((f, i) => (f.hp > 0 ? i : -1)).filter((i) => i >= 0);
 export const speed = (fighter) =>
@@ -80,11 +100,13 @@ export function createLegacyBattle(teams, seed = 1) {
       team.map((card) => {
         const clean = copy(card);
         // Move data is derived from stats; callers cannot inject executable effects.
-        clean.character.moves = assignMoves(
-          clean.character.attribute,
-          clean.character.stats,
-          clean.character.level,
-        );
+        // CPU専用モンスター（白銀スライム）だけは、固定の技をそのまま使う。
+        if (!(clean.character.fixedMoves && clean.character.metalSlime))
+          clean.character.moves = assignMoves(
+            clean.character.attribute,
+            clean.character.stats,
+            clean.character.level,
+          );
         return {
           card: clean,
           hp: clean.character.stats.hp,
@@ -104,6 +126,14 @@ export function createLegacyBattle(teams, seed = 1) {
     ),
   };
   record(state, "バトル開始！ 両者の先頭のカードが登場。");
+  for (const side of [0, 1]) {
+    const active = state.teams[side][0].card;
+    if (active.character.metalSlime)
+      record(
+        state,
+        `${active.name} が現れた！ その姿は捉えにくく、こちらの技が当たりにくい…。`,
+      );
+  }
   return state;
 }
 
@@ -211,6 +241,11 @@ function switchFighter(state, side, index, forced = false) {
     `${side === 0 ? "P1" : "P2"}：${activeFighter(state, side).card.name} が登場${forced ? "（戦闘不能による交代）" : "（交代）"}。`,
     { kind: "switch", side, index },
   );
+  if (activeFighter(state, side).card.character.metalSlime)
+    record(
+      state,
+      `${activeFighter(state, side).card.name} はゆらりと揺れ、狙いを定めにくい！`,
+    );
 }
 function damage(state, fighter, amount, extra = {}) {
   const actual = Math.min(fighter.hp, amount);
@@ -295,8 +330,8 @@ function useMove(state, side, action) {
     record(state, "物理防御・特殊防御が1段階上がった。交代すると元に戻る。");
     return;
   }
-  if (nextRandom(state) * 100 >= move.accuracy) {
-    record(state, "攻撃は外れた！", { kind: "miss", side: 1 - side });
+  if (nextRandom(state) * 100 >= moveAccuracy(state, side, move)) {
+    record(state, missMessage(defender), { kind: "miss", side: 1 - side });
     return;
   }
   const critical =
@@ -457,8 +492,8 @@ function changeStages(state, side, changes) {
 function useModernMove(state, side, move) {
   const attacker = activeFighter(state, side),
     defender = activeFighter(state, 1 - side);
-  if (nextRandom(state) * 100 >= move.accuracy) {
-    record(state, "技は外れた！", { kind: "miss", side: 1 - side });
+  if (nextRandom(state) * 100 >= moveAccuracy(state, side, move)) {
+    record(state, missMessage(defender), { kind: "miss", side: 1 - side });
     return;
   }
   if (move.destroy) {

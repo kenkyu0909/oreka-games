@@ -14,3 +14,26 @@ export const STRONG_CARDS = manifest.cards.map((card, index) => ({
   preview: `${base}strong-cards/${card.preview}`,
   index,
 }));
+
+// 写真から同じカードを作り直したかを判定するための指紋。
+// 名前は変えられるので、能力・レベル・属性・技の並びで照合する。
+const statKey = (stats) =>
+  Object.keys(stats)
+    .sort()
+    .map((key) => `${key}:${stats[key]}`)
+    .join(",");
+
+export const characterSignature = (character) =>
+  [
+    character.version,
+    character.attribute,
+    character.level,
+    statKey(character.stats),
+    character.moves.map((move) => move.id).join(","),
+  ].join("|");
+
+// CPU専用として配布している10枚の指紋。ユーザー側で同じ写真から作ると
+// characterForCard() が能力だけを1/10にする（技はそのまま）。
+export const STRONG_SIGNATURES = new Set(
+  STRONG_CARDS.map(({ character }) => characterSignature(character)),
+);

@@ -1,6 +1,7 @@
 import { generateCharacter, ATTRIBUTES, FINISHES } from "../game.js";
 import { STATIC_HOSTING } from "../hosting.js";
 import { STRONG_CARDS } from "./strong-roster.js";
+import { METAL_SLIME_CHANCE, metalSlimeCard } from "./metal-slime.js";
 export function seededRandom(seed) {
   let state = seed >>> 0 || 1;
   return () => {
@@ -147,4 +148,17 @@ export function makeStrongCpuTeam(seed) {
       finish: FINISHES[0],
       fingerprint: `strong-${card.id}`,
     }));
+}
+
+// 全難易度のCPU編成に、約1/3の確率で白銀スライムを1体混ぜる。
+// シードから決まるので、同じシードなら同じ編成になる。
+export function withMetalSlime(team, seed) {
+  const random = seededRandom(seed ^ 0x51ab1e);
+  // xorshift は近いシードの初回値が偏るので、2回捨ててから使う。
+  random();
+  random();
+  if (random() >= METAL_SLIME_CHANCE) return team;
+  const next = team.slice();
+  next[Math.floor(random() * next.length)] = metalSlimeCard();
+  return next;
 }

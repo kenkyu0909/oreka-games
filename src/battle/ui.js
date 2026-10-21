@@ -9,7 +9,12 @@ import {
   publicState,
 } from "./engine.js";
 import { chooseCpuAction } from "./cpu.js";
-import { makeCpuTeam, makeStrongCpuTeam, seededRandom } from "./presets.js";
+import {
+  makeCpuTeam,
+  makeStrongCpuTeam,
+  seededRandom,
+  withMetalSlime,
+} from "./presets.js";
 import { RoomConnection, savedSession } from "./network.js";
 import { wireTeam } from "./protocol.js";
 import { effects } from "../effects.js";
@@ -483,10 +488,12 @@ export function initBattleUI({ readCurrentCard, createSampleCard }) {
       model.seed = value
         ? Number(value)
         : crypto.getRandomValues(new Uint32Array(1))[0] || 1;
-      model.enemy =
+      model.enemy = withMetalSlime(
         model.difficulty === "strongest"
           ? makeStrongCpuTeam(model.seed)
-          : makeCpuTeam(model.seed);
+          : makeCpuTeam(model.seed),
+        model.seed,
+      );
     }
     if (model.party.length < 3) {
       model.error = "デッキに3枚のカードが必要です。";

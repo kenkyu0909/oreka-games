@@ -1,6 +1,10 @@
 import { assignMovesV2 } from "./moves.js";
 import { assignMovesV3 } from "./rare-moves.js";
 import { specialCardFor, withSpecialMove } from "./special-cards.js";
+import {
+  STRONG_SIGNATURES,
+  characterSignature,
+} from "./battle/strong-roster.js";
 
 // Generation rules are deliberately independent from cosmetic randomness.
 export const RULE_VERSION = "photo-v3";
@@ -250,6 +254,9 @@ export function drawFinish(randomValue) {
 }
 
 export function movesForCharacter(character) {
+  // CPU専用モンスターなど、写真から生成しないカードは固定の技を使う。
+  if (character.fixedMoves && Array.isArray(character.moves))
+    return character.moves;
   const moves =
     character.version === LEGACY_RULE_VERSION
       ? assignMoves(character.attribute, character.stats, character.level)
@@ -263,9 +270,33 @@ export function movesForCharacter(character) {
   return character.special ? withSpecialMove(character.special, moves) : moves;
 }
 
+// CPU専用の強力カードをユーザー側で同じ写真から作った場合、
+// 能力だけを1/10にする（レベル・属性・技はそのまま）。
+// CPUは STRONG_CARDS の複製を直接使うため、この処理の影響を受けない。
+function weakenStrongUserCard(character) {
+  if (!STRONG_SIGNATURES.has(characterSignature(character))) return character;
+  return {
+    ...character,
+    stats: Object.fromEntries(
+      Object.entries(character.stats).map(([key, value]) => [
+        key,
+        Math.max(1, Math.round(value / 10)),
+      ]),
+    ),
+    strongCpuOnly: true,
+  };
+}
+
 // カード名から能力を作り直す。名前が特殊カードでなければ通常の生成結果を返す。
-export function characterForCard(name, features, version = RULE_VERSION) {
-  const character = generateCharacter(features, version);
+// cpu: true は「CPU側の原本」として扱い、1/10補正をかけない（図鑑の照合など）。
+export function characterForCard(
+  name,
+  features,
+  version = RULE_VERSION,
+  { cpu = false } = {},
+) {
+  const base = generateCharacter(features, version);
+  const character = cpu ? base : weakenStrongUserCard(base);
   const special = specialCardFor(name);
   if (!special) return character;
   return {

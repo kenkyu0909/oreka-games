@@ -50,8 +50,11 @@ test("legend import runs the real worker, shows a rare awakening and enters the 
       .evaluate((el) => getComputedStyle(el).pointerEvents),
   ).toBe("none");
   await expect(page.locator("#card-primary-stats b")).toHaveText(
-    Object.values(card.character.stats).map(String),
+    Object.values(card.character.stats).map((value) =>
+      String(Math.max(1, Math.round(value / 10))),
+    ),
   );
+  await expect(page.locator("#status")).toContainText("CPU専用カード");
   await expect(page.locator("#rule-label")).toHaveText("PHOTO-V3");
   await expect(page.locator("#card-mini-moves .rare-card-move")).toContainText(
     "天穹断裂",
@@ -85,11 +88,13 @@ test("normal photos do not trigger the rare awakening", async ({ page }) => {
   await expect(page.locator("#rare-awakening")).not.toBeVisible();
 });
 
-test("a real CPU knockout match presents FINAL BREAK before victory, with the three-card result lineup", async ({
+test("a real CPU knockout match presents FINAL BREAK before the result, with the three-card result lineup", async ({
   page,
 }) => {
   test.setTimeout(120000);
   await page.emulateMedia({ reducedMotion: "no-preference" });
+  // 強力カードのユーザー版は能力1/10。CPUの攻撃で3枚とも倒される展開を使い、
+  // 最後のKOでFINAL BREAKが結果表示より先に出ることを確認する。
   await createLegend(page, "05-jade-dragon");
   for (let i = 0; i < 3; i++) {
     if (i) await page.locator('.view-nav [data-view="creator"]').click();
@@ -109,23 +114,10 @@ test("a real CPU knockout match presents FINAL BREAK before victory, with the th
         });
     }).observe(document.getElementById("battle-app"), { childList: true });
   });
-  for (let turn = 0; turn < 10; turn++) {
-    if (await page.locator(".result-banner").count()) break;
-    await expect(page.locator(".battle-move:enabled").first()).toBeVisible({
-      timeout: 20000,
-    });
-    const rare = page.locator(".battle-move.rare-skill");
-    if (await rare.isEnabled()) await rare.click();
-    else await page.locator(".battle-move").nth(1).click();
-    await expect
-      .poll(
-        async () =>
-          await page.locator(".result-banner, .battle-move:enabled").count(),
-        { timeout: 22000 },
-      )
-      .toBeGreaterThan(0);
-  }
-  await expect(page.locator(".result-banner")).toContainText("VICTORY");
+  await page.locator('[data-action="auto"]').click();
+  await expect(page.locator(".result-banner")).toContainText("DEFEAT", {
+    timeout: 90000,
+  });
   await expect(page.locator(".result-lineup img")).toHaveCount(3);
   await expect(page.locator(".result-lineup .is-active")).toHaveCount(1);
   const finishes = await page.evaluate(() => window.finishes);

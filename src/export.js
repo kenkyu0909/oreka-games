@@ -50,17 +50,29 @@ export async function exportCard({
     y = 88,
     w = 796,
     h = 616;
-  const factor = Math.max(w / image.naturalWidth, h / image.naturalHeight);
+  // 画面のカードと同じく、写真はトリミングせず全体を収める。
+  // 余白は同じ写真をぼかして敷き、切り取られた印象をなくす。
   c.save();
   c.beginPath();
   c.rect(x, y, w, h);
   c.clip();
+  const cover = Math.max(w / image.naturalWidth, h / image.naturalHeight);
+  if (typeof c.filter === "string") c.filter = "blur(26px) brightness(0.82)";
   c.drawImage(
     image,
-    x + (w - image.naturalWidth * factor) / 2,
-    y + (h - image.naturalHeight * factor) / 2,
-    image.naturalWidth * factor,
-    image.naturalHeight * factor,
+    x + (w - image.naturalWidth * cover) / 2,
+    y + (h - image.naturalHeight * cover) / 2,
+    image.naturalWidth * cover,
+    image.naturalHeight * cover,
+  );
+  if (typeof c.filter === "string") c.filter = "none";
+  const fit = Math.min(w / image.naturalWidth, h / image.naturalHeight);
+  c.drawImage(
+    image,
+    x + (w - image.naturalWidth * fit) / 2,
+    y + (h - image.naturalHeight * fit) / 2,
+    image.naturalWidth * fit,
+    image.naturalHeight * fit,
   );
   c.restore();
   c.strokeStyle = "#292b35";

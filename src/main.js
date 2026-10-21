@@ -19,6 +19,16 @@ import {
 initMobileGuide();
 
 const $ = (id) => document.getElementById(id);
+// 写真を切り取らずに枠へ収めるため、余白に敷くぼかし背景へ同じ写真を渡す。
+const photoFrame = document.querySelector(".photo-frame");
+$("card-photo").addEventListener("load", () => {
+  const image = $("card-photo");
+  if (!image.naturalWidth || !image.naturalHeight) return;
+  photoFrame.style.setProperty(
+    "--photo-image",
+    `url("${image.currentSrc || image.src}")`,
+  );
+});
 let current = null;
 let previewUrl = null;
 // 写真を選んだだけの状態。名前を入れて「生成」を押すまでカードにはしない。
@@ -565,7 +575,10 @@ async function loadPhoto(file, sampleName = null, displayName = null) {
           ? "サンプルはオリジナルの図形イラストです。自分の写真でも試してみよう。"
           : "カードができました。元の写真は、再生成のために残しておいてください。") +
         (rare ? ` ★ レア技：${rare.name}` : "") +
-        (special ? ` ◆ 特殊カード：${special.move.name}` : ""),
+        (special ? ` ◆ 特殊カード：${special.move.name}` : "") +
+        (character.strongCpuOnly
+          ? " ◆ CPU専用カード：ユーザー側では能力が1/10（技はそのまま）"
+          : ""),
     };
     // 解析が終わってからカードが組み上がるまでの間も、案内文を工程に合わせる。
     if (forgeShown) status("写真の解析が終わりました。カードを組み立てています。");
