@@ -55,13 +55,13 @@ test("special card: 生成時に必殺技演出、バトル中は写真と技名
       }),
     ),
   });
-  await page.locator("#name-input").fill("破滅竜ガンドラX");
-  await expect(page.locator("#card-name")).toHaveText("破滅竜ガンドラX");
+  await page.locator("#name-input").fill("破壊竜ガンドラG");
+  await expect(page.locator("#card-name")).toHaveText("破壊竜ガンドラG");
   await page.locator("#generate-button").click();
 
   const cutin = page.locator("#battle-cutin");
   await expect(cutin).toBeVisible({ timeout: 20000 });
-  await expect(cutin.locator(".cutin-name")).toHaveText("破滅竜ガンドラX");
+  await expect(cutin.locator(".cutin-name")).toHaveText("破壊竜ガンドラG");
   await expect(cutin.locator(".cutin-move")).toHaveText(
     "デストロイ・ギガ・レイズ",
   );
@@ -90,7 +90,7 @@ test("special card: 生成時に必殺技演出、バトル中は写真と技名
   await expect(page.locator("#card-type")).not.toContainText("特殊カード");
 
   // 特殊カードを1枚、通常カードを2枚。
-  await addCard(page, "破滅竜ガンドラX");
+  await addCard(page, "破壊竜ガンドラG");
   await page.locator('.view-nav [data-view="creator"]').click();
   await addCard(page, "ふつうの一枚");
   await page.locator('.view-nav [data-view="creator"]').click();
@@ -123,7 +123,7 @@ test("special card: 生成時に必殺技演出、バトル中は写真と技名
   await expect(flash.locator(".flash-name")).toHaveText(
     "デストロイ・ギガ・レイズ",
   );
-  await expect(flash.locator(".flash-card")).toHaveText("破滅竜ガンドラX");
+  await expect(flash.locator(".flash-card")).toHaveText("破壊竜ガンドラG");
   expect(await flash.locator("img").getAttribute("src")).toMatch(
     /^(blob|data):/,
   );
@@ -147,7 +147,7 @@ test("special card: 効果音がオフなら音声は取りに行かない", asy
     if (request.url().includes("/audio/gandora-x.wav")) voice.push(request.url());
   });
   await openCreator(page);
-  await addCard(page, "破滅竜ガンドラX");
+  await addCard(page, "破壊竜ガンドラG");
   for (const name of ["ふつうの一枚", "つぎの一枚"]) {
     await page.locator('.view-nav [data-view="creator"]').click();
     await addCard(page, name);

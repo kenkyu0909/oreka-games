@@ -28,7 +28,7 @@ const GANDORA_MOVE = {
 
 const GANDORA = {
   id: "gandora-x",
-  name: "破滅竜ガンドラX",
+  name: "破壊竜ガンドラG",
   move: GANDORA_MOVE,
   cutin: {
     eyebrow: "SPECIAL CARD / 破壊神",

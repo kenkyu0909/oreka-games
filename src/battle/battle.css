@@ -4446,22 +4446,6 @@ body[data-motion="off"] .arena-stage * {
   color: #ffe8a7;
   text-shadow: 0 0 20px #c0833488;
 }
-.rare-catalog {
-  display: grid;
-  gap: 10px;
-}
-.rare-catalog article {
-  border: 1px solid #77613d;
-  padding: 10px 12px;
-  background: #b2851c0c;
-}
-.rare-catalog h4 {
-  margin: 0 0 6px;
-  color: #ffe1a1;
-}
-.rare-catalog p {
-  margin: 4px 0;
-}
 
 /* ── 特殊カード：登場カットイン・破壊演出・吸収した能力 ─────────────── */
 

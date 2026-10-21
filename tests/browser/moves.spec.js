@@ -82,7 +82,7 @@ test("photo-v2 three-hit skill exposes its effect, uses one PP and presents thre
   expect(errors).toEqual([]);
 });
 
-test("rare photo exposes a gold badge, base power, PP, rare cut-in and the 20-move catalog", async ({
+test("rare photo exposes a gold badge, base power, PP and a rare cut-in", async ({
   page,
 }) => {
   const errors = [];
@@ -127,9 +127,6 @@ test("rare photo exposes a gold badge, base power, PP, rare cut-in and the 20-mo
       el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth,
   );
   expect(overflow).toBe(false);
-  await page.locator('[data-action="rules"]').click();
-  await expect(page.locator(".rare-catalog article")).toHaveCount(20);
-  await page.locator('[data-action="close-sheet"]').click();
   await page.locator('[data-action="moves"]').click();
   await expect(page.locator(".sheet-moves .rare-move")).toContainText(
     "60%無視",

@@ -14,7 +14,7 @@ import {
   speed,
 } from "../src/battle/engine.js";
 
-const NAME = "破滅竜ガンドラX";
+const NAME = "破壊竜ガンドラG";
 const FEATURES = {
   brightness: 500,
   saturation: 500,
@@ -59,9 +59,9 @@ test("special card: 名前で4枠目が固定技になり、能力値は写真�
     assert.equal(gandora.moves[i].id, plain.moves[i].id);
 
   // 名前の表記ゆれ（前後・全角の空白、全角英字、大文字小文字）を吸収する。
-  assert.equal(characterForCard("　破滅竜ガンドラｘ　", FEATURES).special, "gandora-x");
-  assert.equal(specialCardFor("破滅竜ガンドラX")?.id, "gandora-x");
-  assert.equal(specialCardFor("破滅竜ガンドラ"), null);
+  assert.equal(characterForCard("　破壊竜ガンドラｇ　", FEATURES).special, "gandora-x");
+  assert.equal(specialCardFor("破壊竜ガンドラG")?.id, "gandora-x");
+  assert.equal(specialCardFor("破壊竜ガンドラ"), null);
 
   // 名前を普通の名前に戻すと、特殊技も印も外れる。
   const reverted = characterForCard("ふつうのカード", FEATURES);
