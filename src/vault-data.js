@@ -38,12 +38,10 @@ export function validateVault(data) {
     )
       throw new Error("図鑑の画像情報が不正です。");
     ids.add(card.id);
-    // 図鑑はCPU側の原本を照合するので、ユーザー用の1/10補正はかけない。
     const actual = characterForCard(
       card.name,
       card.character.features,
       data.rule,
-      { cpu: true },
     );
     if (
       JSON.stringify(actual) !== JSON.stringify(card.character) ||

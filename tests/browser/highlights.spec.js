@@ -49,12 +49,11 @@ test("legend import runs the real worker, shows a rare awakening and enters the 
       .locator("#rare-awakening")
       .evaluate((el) => getComputedStyle(el).pointerEvents),
   ).toBe("none");
+  // 強力カードはユーザー側でも本来の能力のまま（ナーフは名前に「最強」を含むときだけ）。
   await expect(page.locator("#card-primary-stats b")).toHaveText(
-    Object.values(card.character.stats).map((value) =>
-      String(Math.max(1, Math.round(value / 10))),
-    ),
+    Object.values(card.character.stats).map(String),
   );
-  await expect(page.locator("#status")).toContainText("CPU専用カード");
+  await expect(page.locator("#status")).not.toContainText("ナーフ");
   await expect(page.locator("#rule-label")).toHaveText("PHOTO-V3");
   await expect(page.locator("#card-mini-moves .rare-card-move")).toContainText(
     "天穹断裂",
@@ -63,6 +62,28 @@ test("legend import runs the real worker, shows a rare awakening and enters the 
   await expect(page.locator(".party-card")).toHaveCount(1);
   await expect(page.locator(".party-card")).toContainText(card.name);
   await expect(page.locator("#rare-awakening")).not.toBeVisible();
+});
+
+test("naming a card 最強 shows the nerf notice and drops stats to 1/10", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const card = await createLegend(page, "05-jade-dragon");
+  await page.locator("#name-input").fill("最強ジェイド");
+  await expect(page.locator("#status")).toContainText(
+    "最強なのでナーフされました",
+  );
+  await expect(page.locator("#card-primary-stats b")).toHaveText(
+    Object.values(card.character.stats).map((value) =>
+      String(Math.max(1, Math.round(value / 10))),
+    ),
+  );
+  // 「最強」を外すと、能力は元に戻る。
+  await page.locator("#name-input").fill("ジェイド");
+  await expect(page.locator("#status")).toContainText("能力が元に戻りました");
+  await expect(page.locator("#card-primary-stats b")).toHaveText(
+    Object.values(card.character.stats).map(String),
+  );
 });
 
 test("normal photos do not trigger the rare awakening", async ({ page }) => {
@@ -93,9 +114,13 @@ test("a real CPU knockout match presents FINAL BREAK before the result, with the
 }) => {
   test.setTimeout(120000);
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  // 強力カードのユーザー版は能力1/10。CPUの攻撃で3枚とも倒される展開を使い、
+  // 名前に「最強」を含めると能力1/10。CPUの攻撃で3枚とも倒される展開を使い、
   // 最後のKOでFINAL BREAKが結果表示より先に出ることを確認する。
   await createLegend(page, "05-jade-dragon");
+  await page.locator("#name-input").fill("最強ジェイド");
+  await expect(page.locator("#status")).toContainText(
+    "最強なのでナーフされました",
+  );
   for (let i = 0; i < 3; i++) {
     if (i) await page.locator('.view-nav [data-view="creator"]').click();
     await page.locator("#add-team-button").click();

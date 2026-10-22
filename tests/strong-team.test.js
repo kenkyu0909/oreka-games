@@ -50,39 +50,44 @@ test("strongest CPU still returns legal battle actions", () => {
   assert.ok(["move", "switch", "struggle"].includes(action.type));
 });
 
-test("the ten CPU-only cards drop to 1/10 stats only on the player side", () => {
+test("the ten strong cards keep their original stats on the player side", () => {
   for (const card of STRONG_CARDS) {
     const player = characterForCard(
       card.name,
       card.character.features,
       card.character.version,
     );
-    assert.equal(player.strongCpuOnly, true);
+    assert.equal(player.strongestNerf, undefined);
+    assert.deepEqual(player.stats, card.character.stats);
     assert.equal(player.level, card.character.level);
     assert.equal(player.attribute, card.character.attribute);
     assert.deepEqual(
       player.moves.map((move) => move.id),
       card.character.moves.map((move) => move.id),
     );
-    for (const [key, value] of Object.entries(card.character.stats)) {
-      assert.equal(player.stats[key], Math.max(1, Math.round(value / 10)));
-    }
-    // 図鑑の照合などCPU側の原本は、補正なしの能力のまま。
-    const cpu = characterForCard(
-      card.name,
-      card.character.features,
-      card.character.version,
-      { cpu: true },
-    );
-    assert.equal(cpu.strongCpuOnly, undefined);
-    assert.deepEqual(cpu.stats, card.character.stats);
   }
 });
 
-test("renaming and the online protocol keep the strong-card nerf", () => {
+test("a card named 最強 drops to 1/10 stats and the online protocol keeps it", () => {
   const card = STRONG_CARDS[0];
+  const player = characterForCard(
+    "最強の炎竜",
+    card.character.features,
+    card.character.version,
+  );
+  assert.equal(player.strongestNerf, true);
+  assert.equal(player.level, card.character.level);
+  assert.equal(player.attribute, card.character.attribute);
+  assert.deepEqual(
+    player.moves.map((move) => move.id),
+    card.character.moves.map((move) => move.id),
+  );
+  for (const [key, value] of Object.entries(card.character.stats)) {
+    assert.equal(player.stats[key], Math.max(1, Math.round(value / 10)));
+  }
+
   const copy = {
-    name: "名前を変えても同じ",
+    name: "最強のコピー",
     image: "data:image/png;base64,iVBORw0KGgo=",
     fingerprint: "a".repeat(64),
     finish: { id: "normal" },
@@ -91,9 +96,8 @@ test("renaming and the online protocol keep the strong-card nerf", () => {
       features: card.character.features,
     },
   };
-  const clean = normalizeTeam([copy, copy, copy]);
-  for (const entry of clean) {
-    assert.equal(entry.character.strongCpuOnly, true);
+  for (const entry of normalizeTeam([copy, copy, copy])) {
+    assert.equal(entry.character.strongestNerf, true);
     assert.equal(
       entry.character.stats.hp,
       Math.max(1, Math.round(card.character.stats.hp / 10)),

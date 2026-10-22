@@ -2,10 +2,6 @@ import { assignMovesV2 } from "./moves.js";
 import { assignMovesV3 } from "./rare-moves.js";
 import { specialCardFor, withSpecialMove } from "./special-cards.js";
 import { DETAIL_FEATURE_KEYS, FEATURE_LABELS } from "./features.js";
-import {
-  STRONG_SIGNATURES,
-  characterSignature,
-} from "./battle/strong-roster.js";
 
 // Generation rules are deliberately independent from cosmetic randomness.
 export const RULE_VERSION = "photo-v3";
@@ -266,11 +262,10 @@ export function movesForCharacter(character) {
   return character.special ? withSpecialMove(character.special, moves) : moves;
 }
 
-// CPU専用の強力カードをユーザー側で同じ写真から作った場合、
-// 能力だけを1/10にする（レベル・属性・技はそのまま）。
-// CPUは STRONG_CARDS の複製を直接使うため、この処理の影響を受けない。
-function weakenStrongUserCard(character) {
-  if (!STRONG_SIGNATURES.has(characterSignature(character))) return character;
+// 名前に「最強」を含むカードは、最強すぎるため能力だけ1/10にする。
+// レベル・属性・技はそのまま。
+function weakenIfStrongest(character, name) {
+  if (!name?.includes("最強")) return character;
   return {
     ...character,
     stats: Object.fromEntries(
@@ -279,20 +274,16 @@ function weakenStrongUserCard(character) {
         Math.max(1, Math.round(value / 10)),
       ]),
     ),
-    strongCpuOnly: true,
+    strongestNerf: true,
   };
 }
 
 // カード名から能力を作り直す。名前が特殊カードでなければ通常の生成結果を返す。
-// cpu: true は「CPU側の原本」として扱い、1/10補正をかけない（図鑑の照合など）。
-export function characterForCard(
-  name,
-  features,
-  version = RULE_VERSION,
-  { cpu = false } = {},
-) {
-  const base = generateCharacter(features, version);
-  const character = cpu ? base : weakenStrongUserCard(base);
+export function characterForCard(name, features, version = RULE_VERSION) {
+  const character = weakenIfStrongest(
+    generateCharacter(features, version),
+    name,
+  );
   const special = specialCardFor(name);
   if (!special) return character;
   return {

@@ -84,6 +84,26 @@ function runAnalysis(buffer) {
   });
 }
 
+const STAT_ABBREVIATIONS = [
+  "HP",
+  "ATK",
+  "DEF",
+  "MAT",
+  "MDF",
+  "SPD",
+  "CRT",
+  "RES",
+  "REC",
+  "PEN",
+];
+const STRONGEST_NERF_NOTE =
+  " ◆ 最強なのでナーフされました（能力1/10・レベル・属性・技はそのまま）";
+function renderPrimaryStats(character) {
+  $("card-primary-stats").innerHTML = STATS.map(
+    ([key], index) =>
+      `<div><small>${STAT_ABBREVIATIONS[index]}</small><b>${character.stats[key]}</b></div>`,
+  ).join("");
+}
 function renderCardMoves(character) {
   $("card-mini-moves").innerHTML = character.moves
     .map(
@@ -535,22 +555,7 @@ async function loadPhoto(file, sampleName = null, displayName = null) {
       `LEVEL ${String(character.level).padStart(2, "0")} / 12`;
     $("card-attribute").textContent = `${attr.name} / ${attr.label}属性`;
     renderSpecialMark(character);
-    const abbreviations = [
-      "HP",
-      "ATK",
-      "DEF",
-      "MAT",
-      "MDF",
-      "SPD",
-      "CRT",
-      "RES",
-      "REC",
-      "PEN",
-    ];
-    $("card-primary-stats").innerHTML = STATS.map(
-      ([key], i) =>
-        `<div><small>${abbreviations[i]}</small><b>${character.stats[key]}</b></div>`,
-    ).join("");
+    renderPrimaryStats(character);
     renderCardMoves(character);
     $("card-shell").classList.remove("revealing");
     void $("card-shell").offsetWidth;
@@ -576,9 +581,7 @@ async function loadPhoto(file, sampleName = null, displayName = null) {
           : "カードができました。元の写真は、再生成のために残しておいてください。") +
         (rare ? ` ★ レア技：${rare.name}` : "") +
         (special ? ` ◆ 特殊カード：${special.move.name}` : "") +
-        (character.strongCpuOnly
-          ? " ◆ CPU専用カード：ユーザー側では能力が1/10（技はそのまま）"
-          : ""),
+        (character.strongestNerf ? STRONGEST_NERF_NOTE : ""),
     };
     // 解析が終わってからカードが組み上がるまでの間も、案内文を工程に合わせる。
     if (forgeShown) status("写真の解析が終わりました。カードを組み立てています。");
@@ -654,20 +657,37 @@ $("name-input").addEventListener("input", () => {
   $("card-name").textContent = name;
   if (!current) return;
   current.name = name;
-  // 名前が特殊カードに変わった（戻った）時は、技と印をその場で組み直す。
+  // 名前が特殊カードや「最強」表記に変わった（戻った）時は、その場で組み直す。
   const next = characterForCard(
     name,
     current.character.features,
     current.character.version,
   );
-  if ((next.special || null) === (current.character.special || null)) return;
+  const specialChanged =
+    (next.special || null) !== (current.character.special || null);
+  const nerfChanged =
+    Boolean(next.strongestNerf) !== Boolean(current.character.strongestNerf);
+  if (!specialChanged && !nerfChanged) return;
+  const wasNerfed = Boolean(current.character.strongestNerf);
   current.character = next;
-  renderCardMoves(current.character);
-  renderSpecialMark(current.character);
+  renderPrimaryStats(next);
+  renderCardMoves(next);
+  renderSpecialMark(next);
   renderDetails(current);
-  effects.play(next.special ? "rare-reveal" : "ui");
+  // 組み立て中なら、完了時の案内文にも最新の状態を反映する。
+  if (forgeCard)
+    forgeCard.message =
+      forgeCard.message.replace(STRONGEST_NERF_NOTE, "") +
+      (next.strongestNerf ? STRONGEST_NERF_NOTE : "");
+  effects.play(specialChanged && next.special ? "rare-reveal" : "ui");
+  if (next.strongestNerf)
+    status(
+      "最強なのでナーフされました。能力は1/10（レベル・属性・技はそのまま）です。",
+    );
+  else if (wasNerfed)
+    status("カード名を変更しました。能力が元に戻りました。");
   // 生成後に名前を特殊カードへ変えた場合も、同じ必殺技演出を見せる。
-  if (next.special && effects.motion)
+  if (specialChanged && next.special && effects.motion)
     playCardCutIn({
       name,
       character: next,
